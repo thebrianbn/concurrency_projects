@@ -1,9 +1,9 @@
-CC=g++
-CFLAGS= -O3 -mavx
+CC=gcc
+CFLAGS= -O3 -mavx -pthread
 DEPS = 
 OBJ = vector_triad.o
 
-%.o: %.cpp $(DEPS)
+%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 vector_triad: $(OBJ)
