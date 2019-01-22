@@ -31,8 +31,8 @@ double vector_triad(int N, int R) {
 
 	// Intitialize arrays
 	for (int i = 1; i < N; i++) {
-		A[i] = 0; B[i] = 1;
-		C[i] = 2; D[i] = 3;
+		A[i] = 0.0; B[i] = 1.0;
+		C[i] = 2.0; D[i] = 3.0;
  	}
 
  	// Get starting timestamp
@@ -50,7 +50,7 @@ double vector_triad(int N, int R) {
  	// Get ending timestamp
  	get_walltime(&E);
 
- 	MFLOPS = R * N * 2 / ((E - S) * 1.000000);
+ 	MFLOPS = R * N * 2.0 / ((E - S) * 1000000.0);
  	
  	return MFLOPS;
 
@@ -59,10 +59,10 @@ double vector_triad(int N, int R) {
 void main() {
 	/* Run vector triad program with different values for R and N */
 
-	int N[11] = {10, 100, 1000, 10000, 50000, 100000, 500000, 1000000, 5000000, 7500000, 10000000};
-	int R[11] = {10000, 5000, 1000, 1000, 1000, 1000, 1000, 100, 100, 100, 50};
+	int N[18] = {10, 100, 250, 500, 1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 750000, 1000000, 2500000, 5000000, 7500000, 10000000};
+	int R[18] = {10000, 5000, 2500, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 100, 100, 100, 100, 100, 50};
 
-	for (int i = 0; i < 11; i++) {
+	for (int i = 0; i < 18; i++) {
 		double MFLOP = vector_triad(N[i], R[i]);
 		printf("%f\n", MFLOP);
 	}
