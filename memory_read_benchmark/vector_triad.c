@@ -60,7 +60,7 @@ void main() {
 	/* Run vector triad program with different values for R and N */
 
 	int N[11] = {10, 100, 1000, 10000, 50000, 100000, 500000, 1000000, 5000000, 7500000, 10000000};
-	int R[11] = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+	int R[11] = {10000, 5000, 1000, 1000, 1000, 1000, 1000, 100, 100, 100, 50};
 
 	for (int i = 0; i < 11; i++) {
 		double MFLOP = vector_triad(N[i], R[i]);
