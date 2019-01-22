@@ -11,14 +11,15 @@ void get_walltime(double* wcTime) {
 }
 
 void dummy(double a[], double b[], double c[], double d[]) {
+	/* Function used to prevent the compiler from doing an obvious
+	optimization */
 
 	printf("Dummy function called.");
 
 }
 
-void main() {
+double vector_triad(int N, int R) {
 
-	int N = 1000000, R = 1000;
 	double *A, *B, *C, *D;
 	double S, E, MFLOPS;
 
@@ -50,7 +51,21 @@ void main() {
  	get_walltime(&E);
 
  	MFLOPS = R * N * 2 / ((E - S) * 1.000000);
- 	printf("%f\n", MFLOPS);
+ 	
+ 	return MFLOPS;
+
+}
+
+void main() {
+	/* Run vector triad program with different values for R and N */
+
+	int N[11] = {10, 100, 1000, 10000, 50000, 100000, 500000, 1000000, 5000000, 7500000, 10000000};
+	int R[11] = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+
+	for (int i = 0; i < 11; i++) {
+		double MFLOP = vector_triad(N[i], R[i]);
+		printf("%f\n", MFLOP);
+	}
 
 }
 
