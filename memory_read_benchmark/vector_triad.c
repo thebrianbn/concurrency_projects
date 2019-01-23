@@ -64,7 +64,6 @@ void main() {
 
 	for (int i = 0; i < 18; i++) {
 		double MFLOP = vector_triad(N[i], R[i]);
-		printf("%f\n", MFLOP);
 		//printf("N=%d, MFLOPS=%f\n", N[i], MFLOP);
 	}
 
