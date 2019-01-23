@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1
+
+#PBS -l walltime=5:00
+
+#PBS -l pmem=4gb
+
+#PBS -A open
+
+# Get started
+
+echo "Job started on ‘hostname‘ at ‘date‘"
+
+# Load in gcc
+
+module load gcc
+
+# Go to work directory
+
+cd ~/concurrency_projects/memory_read_benchmark/
+
+# Compile code
+
+gcc -o vector_triad vector_triad.c
+
+# Run code
+
+./vector_triad
