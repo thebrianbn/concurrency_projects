@@ -22,7 +22,7 @@ cd ~/concurrency_projects/memory_read_benchmark/
 
 # Compile code
 
-gcc -o vector_triad vector_triad.c
+gcc -o vector_triad vector_triad.c -O3 -mavx -pthread
 
 # Run code
 
