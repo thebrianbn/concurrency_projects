@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 void get_walltime(double* wcTime) {
+	/* Calculate the execution wall-clock time. */
 
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -21,6 +22,8 @@ void dummy(double a[], double b[], double c[], double d[]) {
 }
 
 double vector_triad(int N, int R) {
+	/* Run the vector triad benchmark with a given amount of data size
+	and iterations */
 
 	double *A, *B, *C, *D;
 	double S, E, MFLOPS;
@@ -40,8 +43,9 @@ double vector_triad(int N, int R) {
  	// Get starting timestamp
  	get_walltime(&S);
 
- 	for (int j = 1; j < R; j++) {
- 		for (int i = 1; i < N; i++) {
+ 	// Iteratively update array A
+ 	for (int j = 0; j < R; j++) {
+ 		for (int i = 0; i < N; i++) {
  			A[i] = B[i] + C[i] * D[i];
  		}
  		if (A[2] < 0) {
@@ -52,6 +56,7 @@ double vector_triad(int N, int R) {
  	// Get ending timestamp
  	get_walltime(&E);
 
+ 	// Calculate mega floating-point operations per second
  	MFLOPS = R * N * 2.0 / ((E - S) * 1000000.0);
 
  	// Free allocated memory
