@@ -1,3 +1,5 @@
+// Author: Brian Bao Nguyen
+
 #include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +32,7 @@ double vector_triad(int N, int R) {
 	D = (double *)malloc(sizeof(double)*N);
 
 	// Intitialize arrays
-	for (int i = 1; i < N; i++) {
+	for (int i = 0; i < N; i++) {
 		A[i] = 0.0; B[i] = 1.0;
 		C[i] = 2.0; D[i] = 3.0;
  	}
@@ -51,6 +53,12 @@ double vector_triad(int N, int R) {
  	get_walltime(&E);
 
  	MFLOPS = R * N * 2.0 / ((E - S) * 1000000.0);
+
+ 	// Free allocated memory
+ 	free(A);
+ 	free(B);
+ 	free(C);
+ 	free(D);
  	
  	return MFLOPS;
 
