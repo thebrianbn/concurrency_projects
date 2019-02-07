@@ -26,25 +26,31 @@ void myfunc(std::vector<std::vector<double> > &v_s,
 {
 	// this assumes that the two dimensional vector is square 
 
-	double *result;
 	double sin_temp;
 	double cos_temp;
-
-	result = (double *)malloc(sizeof(double)*v_s[0].size());
+	double temp;
+	double result;
 
 	for (int i = 0; i < v_s[0].size(); i++) {
-		sin_temp = sin(round(fmod(i_v[i], 256)));
-		cos_temp = cos(round(fmod(i_v[i], 256)));
 
+		temp = round(fmod(i_v[i], 256));
+
+		sin_temp = sin(temp);
+		cos_temp = cos(temp);
+
+		// Slightly more optimized way of squaring values
 		sin_temp *= sin_temp;
 		cos_temp *= cos_temp;
 
-		result[i] = sin_temp - cos_temp;
+		// Result of sin^2 - cos^2
+		result = sin_temp - cos_temp;
+
+		// Multiply each value in the matrix by the result
+		for (int j = 0; j < v_s.size(); j++) {
+			v_mat[i][j] = v_s[i][j] * result;
+		}
 	}
 
-
-
-	free(result);
 }
 
 int main(int argc, char *argv[])
