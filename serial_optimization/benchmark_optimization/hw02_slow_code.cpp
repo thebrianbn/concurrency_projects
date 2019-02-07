@@ -1,3 +1,4 @@
+// Author: Brian Bao Nguyen
 // compiles with:
 // g++ slow_code.cpp -o slow_code
 
@@ -25,16 +26,25 @@ void myfunc(std::vector<std::vector<double> > &v_s,
 {
 	// this assumes that the two dimensional vector is square 
 
-	double d_val;
+	double *result;
+	double sin_temp;
+	double cos_temp;
 
-	for (int j = 0; j < v_s.size(); j ++)
-	{
-		for (int i = 0; i < v_s[0].size(); i++)
-		{
-			d_val = round(fmod(i_v[i],256)); // this should return an integer
-			v_mat[i][j] = v_s[i][j]*(sin(d_val)*sin(d_val)-cos(d_val)*cos(d_val));
-		}
+	result = (double *)malloc(sizeof(double)*v_s[0].size());
+
+	for (int i = 0; i < v_s[0].size(); i++) {
+		sin_temp = sin(round(fmod(i_v[i], 256)));
+		cos_temp = cos(round(fmod(i_v[i], 256)));
+
+		sin_temp *= sin_temp;
+		cos_temp *= cos_temp;
+
+		result[i] = sin_temp - cos_temp;
 	}
+
+
+
+	free(result);
 }
 
 int main(int argc, char *argv[])
@@ -42,8 +52,8 @@ int main(int argc, char *argv[])
 
 	// this should be called as> ./slow_code <i_R> <i_N>
 
-	int i_R = 1000;	
-	int i_N = 100;
+	int i_R = 1;	
+	int i_N = 10000;
 
 	double d_S, d_E;
 

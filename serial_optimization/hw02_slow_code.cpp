@@ -1,4 +1,3 @@
-// Author: Brian Bao Nguyen
 // compiles with:
 // g++ slow_code.cpp -o slow_code
 
@@ -43,8 +42,8 @@ int main(int argc, char *argv[])
 
 	// this should be called as> ./slow_code <i_R> <i_N>
 
-	int i_R = 1000;	
-	int i_N = 100;
+	int i_R = 1;	
+	int i_N = 10000;
 
 	double d_S, d_E;
 
