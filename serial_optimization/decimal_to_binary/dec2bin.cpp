@@ -32,17 +32,11 @@ void dec2bin(long int decimalValue, int *binaryArray, int numBits)
 	int bp = numBits;
 	long int N = decimalValue;
 
-	for (int x = 0; x < numBits; x++)
-		binaryArray[x] = 0;
-
 	while(N > 0)
 	{
-		while(N < (pow(2.0, bp)))
-		{
-			bp = bp - 1.0;
-		};
-		binaryArray[(int)bp] = 1;
-		N = N - pow(2.0, bp);
+		binaryArray[bp] = N % 2;
+		bp -= 1;
+		N = N / 2;
 	};
 }
 
@@ -71,12 +65,14 @@ int main(int argc, char **argv)
 		decimal = random();
 
 		dec2bin(decimal, binArray, 32);
-	}	
+	}
 	get_walltime(&d_E1);
 
+	/*
 	#ifdef DEBUG
 	decimal = random();
 	dec2bin(decimal, binArray, 32);
+	*/
 
 	printf("Time dec2bin: %f\n", d_E1-d_S1);
 

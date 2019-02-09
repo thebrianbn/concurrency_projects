@@ -35,6 +35,7 @@ void myfunc(std::vector<std::vector<double> > &v_s,
 
 		temp = round(fmod(i_v[i], 256));
 
+		// Now calculate sin and cos only once for each column
 		sin_temp = sin(temp);
 		cos_temp = cos(temp);
 
