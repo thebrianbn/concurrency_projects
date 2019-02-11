@@ -31,7 +31,7 @@ void dec2bin(long int decimalValue, int *binaryArray, int numBits, int lookupTab
 {
 	int bp = numBits;
 	long int N = decimalValue;
-	if (N < 5000000000) {
+	if (N < 2109000000) {
 		binaryArray = lookupTable[N];
 	}
 	else {
@@ -57,9 +57,9 @@ int main(int argc, char **argv)
 	int binArray[32];
 	long int decimal;
 
-	int lookupTable[5000000000][32];
+	int lookupTable[2109000000][32];
 
-	for (int i = 0; i < 5000000000; i++) {
+	for (int i = 0; i < 2109000000; i++) {
 		dec2bin(i, lookupTable[i], 32, lookupTable);
 	}
 
