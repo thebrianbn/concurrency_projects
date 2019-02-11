@@ -27,17 +27,21 @@ void get_walltime(double* wcTime) {
  *	         A         B         C         D
  *
  */
-void dec2bin(long int decimalValue, int *binaryArray, int numBits)
+void dec2bin(long int decimalValue, int *binaryArray, int numBits, int lookupTable[][32])
 {
 	int bp = numBits;
 	long int N = decimalValue;
-
-	while(N > 0)
-	{
-		binaryArray[bp] = N % 2;
-		bp -= 1;
-		N = N / 2;
-	};
+	if (N < 5000000000) {
+		binaryArray = lookupTable[N];
+	}
+	else {
+		while(N > 0) {
+			binaryArray[bp] = N % 2;
+			bp -= 1;
+			N = N / 2;
+		};
+	}
+	
 }
 
 // print the contents of an array
@@ -53,6 +57,12 @@ int main(int argc, char **argv)
 	int binArray[32];
 	long int decimal;
 
+	int lookupTable[5000000000][32];
+
+	for (int i = 0; i < 5000000000; i++) {
+		dec2bin(i, lookupTable[i], 32, lookupTable);
+	}
+
 	double d_S1, d_E1;
 
 	int i_R = 10000000;
@@ -63,8 +73,7 @@ int main(int argc, char **argv)
 	for (uint32_t ii = 0; ii < i_R; ii++)
 	{
 		decimal = random();
-
-		dec2bin(decimal, binArray, 32);
+		dec2bin(decimal, binArray, 32, lookupTable);
 	}
 	get_walltime(&d_E1);
 
