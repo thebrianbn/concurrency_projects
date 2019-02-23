@@ -10,21 +10,6 @@
 #include <sys/time.h>
 
 
-/*
-
-1) (10 points) Write a serial implementation to calculate the standard-deviation of an array 
-of randomly generated floating point values (or doubles!). Then thread it using std::threads 
- well as OpenMP (yes, two implementations!). Compare the performance results (over both N and P).
- Estimate the overhead costs for both parallelization methods.
-
-Benchmark times for P = 10 and N = 1,000,000,000:
-
-OpenMP: 0.20s
-
-Std::threads: 0.20s
-
-*/
-
 void get_walltime(double* wcTime) {
 	/* Calculate the execution wall-clock time. */
 
@@ -35,25 +20,30 @@ void get_walltime(double* wcTime) {
 }
 
 double calculate_std(double *num_array, int N) {
-	/* Calculate the standard deviation of an array of floats */
+	/* Calculate the standard deviation of an array of floats. */
 
+	// initialize variables
 	double sum = 0;
 	double new_sum = 0;
 	double std, diff, mean;
 
+	// parallel reduction for initial sum
 	#pragma omp parallel for reduction (+: sum)
 	for (int i = 0; i < N; i++) {
     	sum += num_array[i];
 	}
 
+	// calculate mean of initial array values
 	mean = sum / N;
 
+	// [arallel reduction for sum of values subtracted by mean
 	#pragma omp parallel for reduction (+: new_sum)
 	for (int i = 0; i < N; i++) {
 		diff = num_array[i] - mean;
     	new_sum += diff * diff;
 	}
 
+	// take the square root of the new mean to get standard deviation
 	std = sqrt(new_sum / N);
 
 	return std;
@@ -61,24 +51,34 @@ double calculate_std(double *num_array, int N) {
 
 
 int main() {
+	/* Calculate the standard deviation of an array of size N parallely. */
 
+	// initialize variables
 	double S, E;
 	double *A;
 	int N = 1000000000;
 	int P = 10;
 
+	// set the number of threads
 	omp_set_num_threads(P);
 
+	// dynamic allocation for array
 	A = (double *)malloc(sizeof(double)*N);
 
+	// set values of arrays to random doubles
 	for(int i = 0; i < N; i++) {
 		A[i] = random();
 	}
 
+	// calculate std
 	get_walltime(&S);
 	double std = calculate_std(A, N);
 	get_walltime(&E);
 
+	// free memory for array
+	free(A);
+
+	// show standard deviation and execution time
 	printf("%f\n", E - S);
 	printf("%f\n", std);
 
