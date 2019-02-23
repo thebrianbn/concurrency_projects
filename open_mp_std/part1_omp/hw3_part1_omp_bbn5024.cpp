@@ -39,24 +39,19 @@ double calculate_std(double *num_array, int N) {
 
 	double sum = 0;
 	double new_sum = 0;
-	double std;
-	double diff;
-	double mean;
+	double std, diff, mean;
 
-	#pragma omp parallel num_threads(10)
-	{
-		#pragma omp parallel for reduction (+: sum)
-		for (int i = 0; i < N; i++) {
-	    	sum += num_array[i];
-		}
+	#pragma omp parallel for reduction (+: sum)
+	for (int i = 0; i < N; i++) {
+    	sum += num_array[i];
+	}
 
-		mean = sum / N;
+	mean = sum / N;
 
-		#pragma omp parallel for reduction (+: new_sum)
-		for (int i = 0; i < N; i++) {
-			diff = num_array[i] - mean;
-	    	new_sum += diff * diff;
-		}
+	#pragma omp parallel for reduction (+: new_sum)
+	for (int i = 0; i < N; i++) {
+		diff = num_array[i] - mean;
+    	new_sum += diff * diff;
 	}
 
 	std = sqrt(new_sum / N);
