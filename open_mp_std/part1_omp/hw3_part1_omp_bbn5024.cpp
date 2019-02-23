@@ -10,7 +10,6 @@
 #include <sys/time.h>
 
 
-#define NUM_THREADS 10
 /*
 
 1) (10 points) Write a serial implementation to calculate the standard-deviation of an array 
@@ -44,18 +43,22 @@ double calculate_std(double *num_array, int N) {
 	double diff;
 	double mean;
 
-	#pragma omp parallel for reduction (+: sum)
-	for (int i = 0; i < N; i++) {
-    	sum += num_array[i];
+	#pragma omp parallel num_threads(10)
+	{
+		#pragma omp parallel for reduction (+: sum)
+		for (int i = 0; i < N; i++) {
+	    	sum += num_array[i];
+		}
+
+		mean = sum / N;
+
+		#pragma omp parallel for reduction (+: new_sum)
+		for (int i = 0; i < N; i++) {
+			diff = num_array[i] - mean;
+	    	new_sum += diff * diff;
+		}
 	}
 
-	mean = sum / N;
-
-	#pragma omp parallel for reduction (+: new_sum)
-	for (int i = 0; i < N; i++) {
-		diff = num_array[i] - mean;
-    	new_sum += diff * diff;
-	}
 	std = sqrt(new_sum / N);
 
 	return std;
@@ -69,7 +72,7 @@ int main() {
 	int N = 1000000000;
 	int P = 10;
 
-	omp_set_num_threads(NUM_THREADS);
+	omp_set_num_threads(P);
 
 	A = (double *)malloc(sizeof(double)*N);
 
