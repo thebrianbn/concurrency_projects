@@ -32,8 +32,8 @@ double calculate_std(double *num_array) {
 
 	// parallel reduction for initial sum
 	#pragma omp parallel for reduction (+: sum)
-	for (int i = 0; i < N; i += 5) {
-    	sum += num_array[i] + num_array[i+1] + num_array[i+2] + num_array[i+3] + num_array[i+4];
+	for (int i = 0; i < N; i += 4) {
+    	sum += num_array[i] + num_array[i+1] + num_array[i+2] + num_array[i+3];
 	}
 
 	// calculate mean of initial array values
@@ -41,13 +41,12 @@ double calculate_std(double *num_array) {
 
 	// parallel reduction for sum of values subtracted by mean
 	#pragma omp parallel for reduction (+: new_sum)
-	for (int i = 0; i < N; i += 5) {
+	for (int i = 0; i < N; i += 4) {
 		diff1 = num_array[i] - mean;
 		diff2 = num_array[i+1] - mean;
 		diff3 = num_array[i+2] - mean;
 		diff4 = num_array[i+3] - mean;
-		diff5 = num_array[i+4] - mean;
-    	new_sum += (diff1 * diff1) + (diff2 * diff2) + (diff3 * diff3) + (diff4 * diff4) + (diff5 * diff5);
+    	new_sum += (diff1 * diff1) + (diff2 * diff2) + (diff3 * diff3) + (diff4 * diff4);
 	}
 
 	// take the square root of the new mean to get standard deviation
