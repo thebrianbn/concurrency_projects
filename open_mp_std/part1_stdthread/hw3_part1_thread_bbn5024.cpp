@@ -31,15 +31,6 @@ void get_walltime(double* wcTime) {
 
 }
 
-double calculate_std(double sum) {
-	/* Calculate the standard deviation of an array of floats. */
-
-	// take the square root of the new mean to get standard deviation
-	double std = sqrt(sum / N);
-
-	return std;
-}
-
 void calculate_sum(struct MYPARAM *p_params, std::vector<double> &num_array) {
 
 	double sum = 0;
@@ -81,8 +72,6 @@ int main() {
 		A[i] = random();
 	}
 
-	get_walltime(&S);
-
 	// initialize structs for threads
 	struct MYPARAM *p_params = new struct MYPARAM[P];
 
@@ -97,9 +86,11 @@ int main() {
 	// initialize standard threads
 	std::thread threads[P];
 
+	get_walltime(&S);
+
 	// perform initial calls for initial mean
 	for (int i = 0; i < P; i++) {
-		threads[i] = std::thread(calculate_sum, std::ref(&p_params[i]), A);
+		threads[i] = std::thread(calculate_sum, &p_params[i], std::ref(A));
 	}
 
 	// check for thread completion
@@ -133,7 +124,7 @@ int main() {
 
 	// re-fire threads for ssd calculation
 	for (int i = 0; i < P; i++) {
-		threads[i] = std::thread(calculate_ssd, std::ref(&p_params[i]), A, initial_mean);
+		threads[i] = std::thread(calculate_ssd, &p_params[i], std::ref(A), std::ref(initial_mean));
 	}
 
 	// check for thread completion
@@ -161,7 +152,7 @@ int main() {
 	}
 
 	// perform final calculate for std, doesn't need parallelization
-	std = calculate_std(ssd_sum);
+	std = sqrt(ssd_sum / N);
 
 	get_walltime(&E);
 

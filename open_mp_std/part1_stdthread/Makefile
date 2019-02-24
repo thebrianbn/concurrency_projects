@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS= -O3 -mavx
+CFLAGS= -O3 -mavx -pthread -std=c++11
 DEPS = 
 OBJ = hw3_part1_thread_bbn5024.o
 
