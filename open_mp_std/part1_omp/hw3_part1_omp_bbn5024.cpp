@@ -10,6 +10,9 @@
 #include <sys/time.h>
 
 
+#define N 1000000000
+#define P 10
+
 void get_walltime(double* wcTime) {
 	/* Calculate the execution wall-clock time. */
 
@@ -19,7 +22,7 @@ void get_walltime(double* wcTime) {
 
 }
 
-double calculate_std(double *num_array, int N) {
+double calculate_std(double *num_array) {
 	/* Calculate the standard deviation of an array of floats. */
 
 	// initialize variables
@@ -36,7 +39,7 @@ double calculate_std(double *num_array, int N) {
 	// calculate mean of initial array values
 	mean = sum / N;
 
-	// [arallel reduction for sum of values subtracted by mean
+	// parallel reduction for sum of values subtracted by mean
 	#pragma omp parallel for reduction (+: new_sum)
 	for (int i = 0; i < N; i++) {
 		diff = num_array[i] - mean;
@@ -56,8 +59,6 @@ int main() {
 	// initialize variables
 	double S, E;
 	double *A;
-	int N = 1000000000;
-	int P = 10;
 
 	// set the number of threads
 	omp_set_num_threads(P);
@@ -72,7 +73,7 @@ int main() {
 
 	// calculate std
 	get_walltime(&S);
-	double std = calculate_std(A, N);
+	double std = calculate_std(A);
 	get_walltime(&E);
 
 	// free memory for array

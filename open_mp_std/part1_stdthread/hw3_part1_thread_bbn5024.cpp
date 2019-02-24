@@ -7,7 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <thread>
 
+
+#define N 1000000000
+#define P 10
 
 void get_walltime(double* wcTime) {
 	/* Calculate the execution wall-clock time. */
@@ -18,7 +22,7 @@ void get_walltime(double* wcTime) {
 
 }
 
-double calculate_std(double *num_array, int N) {
+double calculate_std(std::vector<double> &num_array) {
 	/* Calculate the standard deviation of an array of floats. */
 
 	// initialize variables
@@ -52,25 +56,28 @@ int main() {
 
 	// initialize variables
 	double S, E;
-	double *A;
-	int N = 1000000000;
-	int P = 10;
 
-	// dynamic allocation for array
-	A = (double *)malloc(sizeof(double)*N);
+	std::vector<double> A(N);
 
 	// set values of arrays to random doubles
 	for(int i = 0; i < N; i++) {
 		A[i] = random();
 	}
 
+	std::thread threads[P];
+
+	for (int i = 0; i < P; i++) {
+		threads[i] = std::thread(calculate_std, A);
+	}
+
+	for (int i = 0; i < P; i++) {
+		threads[i].join();
+	}	
+
 	// calculate std
 	get_walltime(&S);
-	double std = calculate_std(A, N);
+	double std = calculate_std(A);
 	get_walltime(&E);
-
-	// free memory for array
-	free(A);
 
 	// show standard deviation and execution time
 	printf("%f\n", E - S);
