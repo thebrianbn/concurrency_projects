@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS= -O3 -mavx
+CFLAGS= -O3 -mavx -fopenmp -std=c++11
 DEPS = 
 OBJ = hw3_part2_omp_bbn5024.o
 
