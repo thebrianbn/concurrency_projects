@@ -25,10 +25,9 @@ void get_walltime(double* wcTime) {
 double calculate_std(double *num_array) {
 	/* Calculate the standard deviation of an array of floats. */
 
-	// initialize variables
 	double sum = 0;
 	double new_sum = 0;
-	double std, diff1, diff2, diff3, diff4, diff5, mean;
+	double std, diff, mean;
 
 	// parallel reduction for initial sum
 	#pragma omp parallel for reduction (+: sum)
@@ -41,12 +40,9 @@ double calculate_std(double *num_array) {
 
 	// parallel reduction for sum of values subtracted by mean
 	#pragma omp parallel for reduction (+: new_sum)
-	for (int i = 0; i < N; i += 4) {
-		diff1 = num_array[i] - mean;
-		diff2 = num_array[i+1] - mean;
-		diff3 = num_array[i+2] - mean;
-		diff4 = num_array[i+3] - mean;
-    	new_sum += (diff1 * diff1) + (diff2 * diff2) + (diff3 * diff3) + (diff4 * diff4);
+	for (int i = 0; i < N; i++) {
+		diff = num_array[i] - mean;
+    	new_sum += diff * diff;
 	}
 
 	// take the square root of the new mean to get standard deviation

@@ -61,7 +61,6 @@ void calculate_ssd(struct MYPARAM *p_params, std::vector<double> &num_array, dou
 int main() {
 	/* Calculate the standard deviation of an array of size N parallely. */
 
-	// initialize variables
 	double all_sum = 0, ssd_sum = 0, initial_mean = 0, std = 0;
 	double S, E;
 
