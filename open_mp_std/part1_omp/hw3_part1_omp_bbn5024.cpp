@@ -10,9 +10,6 @@
 #include <sys/time.h>
 
 
-#define N 1000000000
-#define P 10
-
 void get_walltime(double* wcTime) {
 	/* Calculate the execution wall-clock time. */
 
@@ -22,12 +19,14 @@ void get_walltime(double* wcTime) {
 
 }
 
-double calculate_std(double *num_array) {
+double calculate_std(double *num_array, int N, int P) {
 	/* Calculate the standard deviation of an array of floats. */
 
 	double sum = 0;
 	double squared_sum = 0;
-	double std, mean, variance;
+	double std, mean, variance, S, E;
+
+	get_walltime(&S);
 
 	// parallel reduction for initial sum
 	#pragma omp parallel for reduction (+: sum, squared_sum)
@@ -42,6 +41,11 @@ double calculate_std(double *num_array) {
 	// take the square root of the variance to get standard deviation
 	std = sqrt(variance);
 
+	get_walltime(&E);
+
+	printf("N=%d, P=%d, TIME=%f\n", N, P, E - S);
+	printf("\tStandard Deviation: %f\n", std);
+
 	return std;
 }
 
@@ -53,28 +57,33 @@ int main() {
 	double S, E;
 	double *A;
 
-	// set the number of threads
-	omp_set_num_threads(P);
+	// testing variables
+	int N[9] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
+	int P[9] = {10, 10, 10, 10, 10, 10, 10, 10, 10};
 
-	// dynamic allocation for array
-	A = (double *)malloc(sizeof(double)*N);
+	
 
-	// set values of arrays to random doubles
-	for(int i = 0; i < N; i++) {
-		A[i] = random();
+	// test calculate_std functionality and show runtimes
+	for (int i = 0; i < 9; i++){
+
+		// set the number of threads to P
+		omp_set_num_threads(P[i]);
+
+		// dynamic allocation for array
+		A = (double *)malloc(sizeof(double)*N[i]);
+
+		// set values of arrays to random doubles
+		for (int i = 0; i < N[i]; i++) {
+			A[i] = random();
+		}
+
+		double std = calculate_std(A, N[i], P[i]);
+
+		// free memory for array
+		free(A);
 	}
-
-	// calculate std
-	get_walltime(&S);
-	double std = calculate_std(A);
-	get_walltime(&E);
-
-	// free memory for array
-	free(A);
-
-	// show standard deviation and execution time
-	printf("%f\n", E - S);
-	printf("%f\n", std);
+	
+	
 
 	return 0;
 }
