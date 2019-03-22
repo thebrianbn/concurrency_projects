@@ -92,20 +92,6 @@ int main() {
 		threads[i] = std::thread(calculate_sum, &p_params[i], std::ref(A));
 	}
 
-	// check for thread completion
-	bool b_done = false;
-	while (!b_done)
-	{
-		b_done = true;
-		for (int i = 0; i < P; i++)
-		{
-			if (!p_params[i].b_complete)	
-				b_done = false;
-		}
-	
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	}
-
 	// join all threads for initial mean
 	for (int i = 0; i < P; i++) {
 		threads[i].join();
@@ -124,20 +110,6 @@ int main() {
 	// re-fire threads for ssd calculation
 	for (int i = 0; i < P; i++) {
 		threads[i] = std::thread(calculate_ssd, &p_params[i], std::ref(A), std::ref(initial_mean));
-	}
-
-	// check for thread completion
-	b_done = false;
-	while (!b_done)
-	{
-		b_done = true;
-		for (int i = 0; i < P; i++)
-		{
-			if (!p_params[i].b_complete)	
-				b_done = false;
-		}
-	
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 
 	// join all threads for ssd
