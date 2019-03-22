@@ -12,9 +12,6 @@
 #include <stdio.h>
 
 
-#define N 1000000000
-#define P 10
-
 struct MYPARAM{
 	int i_start;
 	int i_stop;
@@ -51,62 +48,71 @@ double calculate_std(struct MYPARAM *p_params, std::vector<double> &num_array) {
 int main() {
 	/* Calculate the standard deviation of an array of size N parallely. */
 
-	double all_sum = 0, squared_sum = 0, std = 0;
+	double all_sum, squared_sum, std;
 	double S, E, mean, variance;
 
-	std::vector<double> A(N);
+	// testing variables
+	int N[9] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
+	int P[9] = {10, 10, 10, 10, 10, 10, 10, 10, 10};
 
-	// set values of arrays to random doubles
-	for(int i = 0; i < N; i++) {
-		A[i] = random();
+	for (int i = 0; i < 9; i++) {
+
+		all_sum = 0, squared_sum = 0, std = 0;
+		std::vector<double> A(N[i]);
+
+		// set values of arrays to random doubles
+		for(int j = 0; j < N[i]; j++) {
+			A[j] = random();
+		}
+
+		// initialize structs for threads
+		struct MYPARAM *p_params = new struct MYPARAM[P[i]];
+
+		// set start and end array indices
+		for (int j = 0; j < P[i]; j++) {
+			p_params[j].i_start = j * (N[i]/P[i]);
+			p_params[j].i_stop = (j + 1) * (N[i]/P[i]);
+			p_params[j].d_sum = 0.0;
+			p_params[j].d_squared_sum = 0.0;
+			p_params[j].b_complete = false;
+		}
+
+		// initialize standard threads
+		std::thread threads[P[i]];
+
+		get_walltime(&S);
+
+		// perform initial calls for sums
+		for (int j = 0; j < P[i]; j++) {
+			threads[j] = std::thread(calculate_std, &p_params[j], std::ref(A));
+		}
+
+		// join all threads for sums
+		for (int j = 0; j < P[i]; j++) {
+			threads[j].join();
+		}
+
+		// sum all thread results
+		for (int j = 0; j < P[i]; j++) {
+			all_sum += p_params[j].d_sum;
+			squared_sum += p_params[j].d_squared_sum;
+		}
+
+		// calculate mean and variance of initial array
+		mean = all_sum / N[i];
+		variance = (squared_sum / N[i]) - (mean * mean);
+
+		// take the square root of the variance to get standard deviation
+		std = sqrt(variance);
+
+		get_walltime(&E);
+
+		// show standard deviation and execution time
+		printf("N=%d, P=%d, TIME=%f\n", N[i], P[i], E - S);
+		printf("\tStandard Deviation: %f\n", std);
+
+		delete[] p_params;
 	}
-
-	// initialize structs for threads
-	struct MYPARAM *p_params = new struct MYPARAM[P];
-
-	// set start and end array indices
-	for (int i = 0; i < P; i++) {
-		p_params[i].i_start = i * (N/P);
-		p_params[i].i_stop = (i + 1) * (N/P);
-		p_params[i].d_sum = 0.0;
-		p_params[i].d_squared_sum = 0.0;
-		p_params[i].b_complete = false;
-	}
-
-	// initialize standard threads
-	std::thread threads[P];
-
-	get_walltime(&S);
-
-	// perform initial calls for sums
-	for (int i = 0; i < P; i++) {
-		threads[i] = std::thread(calculate_std, &p_params[i], std::ref(A));
-	}
-
-	// join all threads for sums
-	for (int i = 0; i < P; i++) {
-		threads[i].join();
-	}
-
-	// sum all thread results
-	for (int i = 0; i < P; i++) {
-		all_sum += p_params[i].d_sum;
-		squared_sum += p_params[i].d_squared_sum;
-	}
-
-	// calculate mean and variance of initial array
-	mean = all_sum / N;
-	variance = (squared_sum / N) - (mean * mean);
-
-	// take the square root of the variance to get standard deviation
-	std = sqrt(variance);
-
-	get_walltime(&E);
-
-	// show standard deviation and execution time
-	printf("%f\n", E - S);
-	printf("%f\n", std);
-
-	delete[] p_params;
+	
 	return 0;
 }

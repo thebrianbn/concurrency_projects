@@ -73,8 +73,8 @@ int main() {
 		A = (double *)malloc(sizeof(double)*N[i]);
 
 		// set values of arrays to random doubles
-		for (int i = 0; i < N[i]; i++) {
-			A[i] = random();
+		for (int j = 0; j < N[i]; j++) {
+			A[j] = random();
 		}
 
 		double std = calculate_std(A, N[i], P[i]);
