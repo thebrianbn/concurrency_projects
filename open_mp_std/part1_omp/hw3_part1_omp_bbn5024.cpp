@@ -39,7 +39,7 @@ double calculate_std(double *num_array) {
 	mean = sum / N;
 	variance = (squared_sum / N) - (mean * mean);
 
-	// take the square root of the varianceto get standard deviation
+	// take the square root of the variance to get standard deviation
 	std = sqrt(variance);
 
 	return std;

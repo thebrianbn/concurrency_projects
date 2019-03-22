@@ -18,7 +18,8 @@
 struct MYPARAM{
 	int i_start;
 	int i_stop;
-	double d_result;
+	double d_sum;
+	double d_squared_sum;
     bool b_complete;
 };
 
@@ -31,38 +32,27 @@ void get_walltime(double* wcTime) {
 
 }
 
-void calculate_sum(struct MYPARAM *p_params, std::vector<double> &num_array) {
+double calculate_std(struct MYPARAM *p_params, std::vector<double> &num_array) {
+	/* Calculate the standard deviation of an array of floats. */
 
 	double sum = 0;
+	double squared_sum = 0;
+	double std;
 
 	for (int i = p_params->i_start; i < p_params->i_stop; i++) {
     	sum += num_array[i];
+    	squared_sum += num_array[i] * num_array[i];
 	}
 
-	p_params->d_result = sum;
-	p_params->b_complete = true;
+	p_params->d_sum = sum;
+	p_params->d_squared_sum = squared_sum;
 }
-
-void calculate_ssd(struct MYPARAM *p_params, std::vector<double> &num_array, double mean) {
-
-	double sum = 0;
-	double diff;
-
-	for (int i = p_params->i_start; i < p_params->i_stop; i++) {
-		diff = num_array[i] - mean;
-		sum += diff * diff;
-	}
-
-	p_params->d_result = sum;
-	p_params->b_complete = true;
-}
-
 
 int main() {
 	/* Calculate the standard deviation of an array of size N parallely. */
 
-	double all_sum = 0, ssd_sum = 0, initial_mean = 0, std = 0;
-	double S, E;
+	double all_sum = 0, squared_sum = 0, std = 0;
+	double S, E, mean, variance;
 
 	std::vector<double> A(N);
 
@@ -78,7 +68,8 @@ int main() {
 	for (int i = 0; i < P; i++) {
 		p_params[i].i_start = i * (N/P);
 		p_params[i].i_stop = (i + 1) * (N/P);
-		p_params[i].d_result = 0.0;	
+		p_params[i].d_sum = 0.0;
+		p_params[i].d_squared_sum = 0.0;
 		p_params[i].b_complete = false;
 	}
 
@@ -87,43 +78,28 @@ int main() {
 
 	get_walltime(&S);
 
-	// perform initial calls for initial mean
+	// perform initial calls for sums
 	for (int i = 0; i < P; i++) {
-		threads[i] = std::thread(calculate_sum, &p_params[i], std::ref(A));
+		threads[i] = std::thread(calculate_std, &p_params[i], std::ref(A));
 	}
 
-	// join all threads for initial mean
-	for (int i = 0; i < P; i++) {
-		threads[i].join();
-	}
-
-	// sum all thread results, reset for next firing of threads
-	for (int i = 0; i < P; i++) {
-		all_sum += p_params[i].d_result;
-		p_params[i].d_result = 0.0;
-		p_params[i].b_complete = false;
-	}
-
-	// calculate mean of initial array
-	initial_mean = all_sum / N;
-
-	// re-fire threads for ssd calculation
-	for (int i = 0; i < P; i++) {
-		threads[i] = std::thread(calculate_ssd, &p_params[i], std::ref(A), std::ref(initial_mean));
-	}
-
-	// join all threads for ssd
+	// join all threads for sums
 	for (int i = 0; i < P; i++) {
 		threads[i].join();
 	}
 
-	// sum all thread results for ssd
+	// sum all thread results
 	for (int i = 0; i < P; i++) {
-		ssd_sum += p_params[i].d_result;
+		all_sum += p_params[i].d_sum;
+		squared_sum += p_params[i].d_squared_sum;
 	}
 
-	// perform final calculate for std, doesn't need parallelization
-	std = sqrt(ssd_sum / N);
+	// calculate mean and variance of initial array
+	mean = all_sum / N;
+	variance = (squared_sum / N) - (mean * mean);
+
+	// take the square root of the variance to get standard deviation
+	std = sqrt(variance);
 
 	get_walltime(&E);
 
