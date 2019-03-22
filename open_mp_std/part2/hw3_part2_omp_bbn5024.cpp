@@ -10,8 +10,6 @@
 #include <sys/time.h>
 
 
-#define N 1000000000
-#define P 10
 #define sigma 2
 
 void get_walltime(double* wcTime) {
@@ -24,7 +22,7 @@ void get_walltime(double* wcTime) {
 }
 
 void over_sigma(std::vector<std::tuple<int, double>> &targets_array, double *num_array,
-	double &std, double &mean) {
+	double &std, double &mean, int N) {
 	/* Return a vector of tuples containing indices and values in an array
 	that is over a specified sigma value */
 
@@ -39,7 +37,7 @@ void over_sigma(std::vector<std::tuple<int, double>> &targets_array, double *num
 	}
 }
 
-double calculate_std(double *num_array, double &std_val, double &mean_val) {
+double calculate_std(double *num_array, double &std_val, double &mean_val, int N) {
 	/* Calculate the standard deviation of an array of floats. */
 
 	double sum = 0;
@@ -69,30 +67,39 @@ int main() {
 	double *A;
 	std::vector<std::tuple<int, double>> targets;
 
-	// set the number of threads
-	omp_set_num_threads(P);
+	// testing variables
+	int N[9] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
+	int P[9] = {10, 10, 10, 10, 10, 10, 10, 10, 10};
 
-	// dynamic allocation for array
-	A = (double *)malloc(sizeof(double)*N);
+	for (int i = 0; i < 9; i++){
 
-	// set values of arrays to random doubles
-	for(int i = 0; i < N; i++) {
-		A[i] = random();
+		std = 0, mean = 0;
+
+		// set the number of threads
+		omp_set_num_threads(P[i]);
+
+		// dynamic allocation for array
+		A = (double *)malloc(sizeof(double)*N[i]);
+
+		// set values of arrays to random doubles
+		for(int j = 0; j < N[i]; j++) {
+			A[j] = random();
+		}
+
+		// calculate std
+		calculate_std(A, std, mean, N[i]);
+		
+		// Return a vector of tuples of indices and values greater than sigma
+		get_walltime(&S);
+		over_sigma(targets, A, std, mean, N[i]);
+		get_walltime(&E);
+
+		// free memory for array
+		free(A);
+
+		// show execution time of greater_sigma
+		printf("%f\n", E - S);
 	}
-
-	// calculate std
-	calculate_std(A, std, mean);
-	
-	// Return a vector of tuples of indices and values greater than sigma
-	get_walltime(&S);
-	over_sigma(targets, A, std, mean);
-	get_walltime(&E);
-
-	// free memory for array
-	free(A);
-
-	// show execution time of greater_sigma
-	printf("%f\n", E - S);
 
 	return 0;
 }
