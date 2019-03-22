@@ -12,7 +12,7 @@
 
 #define N 1000000000
 #define P 10
-#define sigma 1
+#define sigma 2
 
 void get_walltime(double* wcTime) {
 	/* Calculate the execution wall-clock time. */
@@ -23,17 +23,17 @@ void get_walltime(double* wcTime) {
 
 }
 
-void within_sigma(std::vector<std::tuple<int, double>> &targets_array, double *num_array,
+void over_sigma(std::vector<std::tuple<int, double>> &targets_array, double *num_array,
 	double &std, double &mean) {
 	/* Return a vector of tuples containing indices and values in an array
 	that is over a specified sigma value */
 
-	double threshold_left = mean + (sigma * std);
-	double threshold_right = mean - (sigma * std);
+	double threshold_right = mean + (sigma * std);
+	double threshold_left = mean - (sigma * std);
 
 	#pragma omp parallel for
 	for (int i = 0; i < N; i++) {
-		if (num_array[i] >= threshold_left && num_array[i] <= threshold_right) {
+		if (num_array[i] <= threshold_left || num_array[i] >= threshold_right) {
 			targets_array.push_back(std::make_tuple(i, num_array[i]));
 		}
 	}
@@ -91,7 +91,7 @@ int main() {
 	
 	// Return a vector of tuples of indices and values greater than sigma
 	get_walltime(&S);
-	within_sigma(targets, A, std, mean);
+	over_sigma(targets, A, std, mean);
 	get_walltime(&E);
 
 	// free memory for array
