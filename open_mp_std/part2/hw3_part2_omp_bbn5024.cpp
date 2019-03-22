@@ -39,31 +39,25 @@ void over_sigma(std::vector<std::tuple<int, double>> &targets_array, double *num
 	}
 }
 
-void calculate_std(double *num_array, double &std_val, double &mean_val) {
+double calculate_std(double *num_array, double &std_val, double &mean_val) {
 	/* Calculate the standard deviation of an array of floats. */
 
 	double sum = 0;
-	double new_sum = 0;
-	double diff;
+	double squared_sum = 0;
+	double variance;
 
 	// parallel reduction for initial sum
-	#pragma omp parallel for reduction (+: sum)
-	for (int i = 0; i < N; i += 4) {
-    	sum += num_array[i] + num_array[i+1] + num_array[i+2] + num_array[i+3];
-	}
-
-	// calculate mean of initial array values
-	mean_val = sum / N;
-
-	// parallel reduction for sum of values subtracted by mean
-	#pragma omp parallel for reduction (+: new_sum)
+	#pragma omp parallel for reduction (+: sum, squared_sum)
 	for (int i = 0; i < N; i++) {
-		diff = num_array[i] - mean_val;
-    	new_sum += diff * diff;
+    	sum += num_array[i];
+    	squared_sum += num_array[i] * num_array[i];
 	}
 
-	// take the square root of the new mean to get standard deviation
-	std_val = sqrt(new_sum / N);
+	mean_val = sum / N;
+	variance = (squared_sum / N) - (mean_val * mean_val);
+
+	// take the square root of the variance to get standard deviation
+	std_val = sqrt(variance);
 }
 
 using namespace std;
