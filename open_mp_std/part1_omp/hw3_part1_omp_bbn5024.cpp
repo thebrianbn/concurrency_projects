@@ -26,27 +26,21 @@ double calculate_std(double *num_array) {
 	/* Calculate the standard deviation of an array of floats. */
 
 	double sum = 0;
-	double new_sum = 0;
-	double std, diff, mean;
+	double squared_sum = 0;
+	double std, mean, variance;
 
 	// parallel reduction for initial sum
-	#pragma omp parallel for reduction (+: sum)
-	for (int i = 0; i < N; i += 4) {
-    	sum += num_array[i] + num_array[i+1] + num_array[i+2] + num_array[i+3];
-	}
-
-	// calculate mean of initial array values
-	mean = sum / N;
-
-	// parallel reduction for sum of values subtracted by mean
-	#pragma omp parallel for reduction (+: new_sum)
+	#pragma omp parallel for reduction (+: sum, squared_sum)
 	for (int i = 0; i < N; i++) {
-		diff = num_array[i] - mean;
-    	new_sum += diff * diff;
+    	sum += num_array[i];
+    	squared_sum += num_array[i] * num_array[i];
 	}
 
-	// take the square root of the new mean to get standard deviation
-	std = sqrt(new_sum / N);
+	mean = sum / N;
+	variance = (squared_sum / N) - (mean * mean);
+
+	// take the square root of the varianceto get standard deviation
+	std = sqrt(variance);
 
 	return std;
 }
