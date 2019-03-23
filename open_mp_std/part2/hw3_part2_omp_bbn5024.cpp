@@ -99,7 +99,7 @@ int main() {
 		free(A);
 
 		// show execution time of greater_sigma
-		printf("%f\n", E - S);
+		printf("N=%d, P=%d, TIME=%f\n", N[i], P[i], E - S);
 	}
 
 	return 0;
