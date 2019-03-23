@@ -33,6 +33,7 @@ void over_sigma(std::vector<std::tuple<int, double>> &targets_array, double *num
 	for (int i = 0; i < N; i++) {
 		if (num_array[i] <= threshold_left || num_array[i] >= threshold_right) {
 			targets_array.push_back(std::make_tuple(i, num_array[i]));
+			printf("Index: %d, Value: %f", i, num_array[i]);
 		}
 	}
 }
