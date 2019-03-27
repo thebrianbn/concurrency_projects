@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1
+
+#PBS -l walltime=5:00
+
+#PBS -l pmem=4gb
+
+#PBS -A open
+
+# Get started
+
+echo "Job started on ‘hostname‘ at ‘date‘"
+
+# Load in gcc
+
+module load gcc
+
+# Go to work directory
+
+cd ~/concurrency_projects/cellular_automaton/part2/
+
+# Compile code
+
+g++ -o hw4_part2_bbn5024 hw4_part2_bbn5024.cpp -O3 -mavx
+
+# Run code
+
+./hw4_part2_bbn5024
