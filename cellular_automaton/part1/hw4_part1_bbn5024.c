@@ -105,6 +105,8 @@ int main(int argc, char **argv) {
     int *recv_top_row;
     int *recv_bottom_row;
     int num_alive;
+    int dest_up = taskid-1;
+    int dest_down = taskid+1;
 
     // arrays used for sendrecv
     send_top_row = (int *) malloc(m * sizeof(int));
@@ -121,6 +123,8 @@ int main(int argc, char **argv) {
 
         num_alive = 0;
 
+        printf("num_rows: %d\n", rows_per_worker);
+
         for (j=0; j<m; j++) {
             send_bottom_row[j] = grid_current[(rows_per_worker - 1) * m + j];
         }
@@ -135,8 +139,8 @@ int main(int argc, char **argv) {
             printf("BEFORE Task: %d\n", taskid);
 
             // send bottom row, receive top row of next worker
-            MPI_Sendrecv(&send_bottom_row, m, MPI_INT, (taskid+1), t,
-                &recv_top_row, m, MPI_INT, (taskid+1), t, MPI_COMM_WORLD,
+            MPI_Sendrecv(&send_bottom_row, m, MPI_INT, dest_down, t,
+                &recv_top_row, m, MPI_INT, dest_down, t, MPI_COMM_WORLD,
                 &status);
 
             printf("AFTER Task: %d\n", taskid);
@@ -176,8 +180,8 @@ int main(int argc, char **argv) {
             printf("BEFORE Task: %d\n", taskid);
 
             // send top row, receive bottom row of previous worker
-            MPI_Sendrecv(&send_top_row, m, MPI_INT, (taskid-1), t,
-                &recv_bottom_row, m, MPI_INT, (taskid-1), t, MPI_COMM_WORLD,
+            MPI_Sendrecv(&send_top_row, m, MPI_INT, dest_up, 0,
+                &recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
 
             printf("AFTER Task: %d\n", taskid);
@@ -218,11 +222,11 @@ int main(int argc, char **argv) {
 
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
-            MPI_Sendrecv(&send_top_row, m, MPI_INT, (taskid-1), t,
-                &recv_bottom_row, m, MPI_INT, (taskid-1), t, MPI_COMM_WORLD,
+            MPI_Sendrecv(&send_top_row, m, MPI_INT, dest_up, 0,
+                &recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
-            MPI_Sendrecv(&send_bottom_row, m, MPI_INT, (taskid+1), t,
-                &recv_top_row, m, MPI_INT, (taskid+1), t, MPI_COMM_WORLD,
+            MPI_Sendrecv(&send_bottom_row, m, MPI_INT, dest_down, 0,
+                &recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
 
             printf("AFTER Task: %d\n", taskid);
