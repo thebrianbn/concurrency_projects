@@ -47,9 +47,6 @@ int main(int argc, char **argv) {
 
     int i, j, t;
 
-    printf("%d", taskid);
-    return 0;
-
     // if last worker, handle any extra rows
     if (taskid == p) {
 
@@ -121,6 +118,9 @@ int main(int argc, char **argv) {
     /* for each generation, update the game of life board with p
     number of workers */
     for (t=0; t<k; t++) {
+
+        printf("Generation: %d\n", t);
+
         num_alive = 0;
 
         for (j=0; j<m; j++) {
@@ -235,6 +235,7 @@ int main(int argc, char **argv) {
                     else if (i == rows_per_worker - 1) {
                         num_alive += recv_top_row[j-1] + recv_top_row[j]
                         + recv_top_row[j+1];
+                        num_alive += grid_current[(i-1)*m+j-1] + 
                                       grid_current[(i-1)*m+j  ] + 
                                       grid_current[(i-1)*m+j+1];
                     }
@@ -264,14 +265,6 @@ int main(int argc, char **argv) {
     }
 
     d_endTime = get_walltime();
-
-    /* Verify */
-    int verify_failed = 0;
-    for (i=0; i<m; i++) {
-        for (j=0; j<m; j++) {
-            /* Add verification code here */
-        }
-    }
 
     printf("Time taken: %3.3lf s.\n", d_endTime - d_startTime);
     printf("Performance: %3.3lf billion cell updates/s\n", 
