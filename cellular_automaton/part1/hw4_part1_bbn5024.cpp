@@ -196,9 +196,6 @@ int main(int argc, char **argv) {
                     num_alive  += 
                                 grid_current[(i  )*m+j-1] + 
                                 grid_current[(i  )*m+j+1] + 
-                                grid_current[(i-1)*m+j-1] + 
-                                grid_current[(i-1)*m+j  ] + 
-                                grid_current[(i-1)*m+j+1] +
                                 grid_current[(i+1)*m+j-1] + 
                                 grid_current[(i+1)*m+j  ] + 
                                 grid_current[(i+1)*m+j+1];
@@ -230,10 +227,16 @@ int main(int argc, char **argv) {
                     if (i == 0) {
                         num_alive += recv_bottom_row[j-1] + recv_bottom_row[j] +
                         recv_bottom_row[j+1];
+                        num_alive += grid_current[(i+1)*m+j-1] + 
+                                      grid_current[(i+1)*m+j  ] + 
+                                      grid_current[(i+1)*m+j+1];
                     }
                     else if (i == rows_per_worker - 1) {
                         num_alive += recv_top_row[j-1] + recv_top_row[j]
                         + recv_top_row[j+1];
+                        num_alive += grid_current[(i-1)*m+j-1] + 
+                                      grid_current[(i-1)*m+j  ] + 
+                                      grid_current[(i-1)*m+j+1];
                     }
                     else {
                         num_alive += grid_current[(i-1)*m+j-1] + 
