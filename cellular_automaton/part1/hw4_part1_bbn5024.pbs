@@ -27,7 +27,7 @@ cd ~/concurrency_projects/cellular_automaton/part1/
 
 # Compile code
 
-mpicc -o hw4_part1_bbn5024.out hw4_part1_bbn5024.cpp -O3 -mavx 1500000 10 100
+mpicc -o hw4_part1_bbn5024.out hw4_part1_bbn5024.cpp -O3 -mavx
 
 #-#-# Echo
 echo "#-#-#Compilation completed and execution started at `date`"
