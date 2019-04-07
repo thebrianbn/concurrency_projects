@@ -6,6 +6,8 @@
 #include <sys/time.h>
 #include <time.h>
 
+MPI_Status status;
+
 static double get_walltime() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -15,7 +17,8 @@ static double get_walltime() {
 int main(int argc, char **argv) {
 
     int top_index, bottom_index, left_index, right_index;
-    int taskid, numtasks;
+    int taskid, numtasks, start_row, end_row;
+    unsigned long m, k, p;
 
     if (argc != 4) {
         printf("%s <m> <k>\n", argv[0]);
@@ -27,83 +30,220 @@ int main(int argc, char **argv) {
 		exit(1);
     }
 
-    unsigned long m, k, p;
-
+    /* receive grid dimensions, generation amount, and worker amount from
+    command line */
     m = atol(argv[1]);
     k = atol(argv[2]);
     p = atol(argv[3]);
 
-    int *grid_current;
-    int *grid_next;
-    
-    // dynamic allocation for current grid
-    grid_current = (int *) malloc(m * m * sizeof(int));
-	if (grid_current == NULL)
-	{
-		printf("Error allocating memory for grid_current!\n");
-		exit(1);
-	}
-
-    // dynamic allocation for next grid
-    grid_next = (int *) malloc(m * m * sizeof(int));
-    if (grid_next == NULL)
-   	{
-		printf("Error allocating memory for grid_next!\n");
-		exit(1);
-	}
-
-    int i, j, t;
-
-    /* static initalization, so that we can verify output */
-    /* using very simple initialization right now */
-    /* this isn't a good check for parallel debugging */
-    for (i=0; i<m; i++) {
-        for (j=0; j<m; j++) {
-            grid_current[i*m+j] = 0;
-            grid_next[i*m+j] = 0;
-        }
-    }
+    printf("%d", taskid);
 
     int rows_per_worker = floor(m / p);
-    int start_row, end_row;
+
+    int *grid_current;
+    int *grid_next;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
-
-    printf("%d", taskid);
     
+    int i, j, t;
 
+    // if last worker, handle any extra rows
+    if (taskid == p-1) {
 
-    /* initializing some cells in the middle */
-    grid_current[m*m/2 + m/2 + 0] = 1;
-    grid_current[m*m/2 + m/2 + 1] = 1;
-    grid_current[m*m/2 + m/2 + 2] = 1;
-    grid_current[m*m/2 + m/2 + 3] = 1;
+        grid_current = (int *) malloc(rows_per_worker + (m % p) * m * sizeof(int));
+        if (grid_current == NULL) {
+            printf("Error allocating memory for grid_current!\n");
+            exit(1);
+        }
+
+        grid_next = (int *) malloc(rows_per_worker + (m % p) * m * sizeof(int));
+        if (grid_next == NULL) {
+            printf("Error allocating memory for grid_next!\n");
+            exit(1);
+        }
+
+        for (i=0; i<rows_per_worker + (m % p); i++) {
+            for (j=0; j<m; j++) {
+                grid_current[i*m+j] = 0;
+                grid_next[i*m+j] = 0;
+            }
+        }
+
+    }
+    else {
+
+        grid_current = (int *) malloc(rows_per_worker * m * sizeof(int));
+        if (grid_current == NULL) {
+            printf("Error allocating memory for grid_current!\n");
+            exit(1);
+        }
+
+        grid_next = (int *) malloc(rows_per_worker * m * sizeof(int));
+        if (grid_next == NULL) {
+            printf("Error allocating memory for grid_next!\n");
+            exit(1);
+        }
+
+        for (i=0; i<rows_per_worker; i++) {
+            for (j=0; j<m; j++) {
+                grid_current[i*m+j] = 0;
+                grid_next[i*m+j] = 0;
+            }
+        }
+    }
+
+    int *send_top_row;
+    int *send_bottom_row;
+    int *recv_top_row;
+    int *recv_bottom_row;
+    int num_alive;
+
+    // arrays used for MPI_Sendrecv
+    send_top_row = (int *) malloc(m * sizeof(int));
+    send_bottom_row = (int *) malloc(m * sizeof(int));
+    recv_top_row = (int *) malloc(m * sizeof(int));
+    recv_bottom_row = (int *) malloc(m * sizeof(int));
 
     double d_startTime = 0.0, d_endTime = 0.0;
-	d_startTime = get_walltime();
-
-    /* serial code */
-    /* considering only internal cells */
+    d_startTime = get_walltime();
+    
+    /* for each generation, update the game of life board with p
+    number of workers */
     for (t=0; t<k; t++) {
-        for (i=1; i<m-1; i++) {
-            for (j=1; j<m-1; j++) {
-                /* avoiding conditionals inside inner loop */
-                top_index = (i-1)*m; bottom_index = (i+1)*m;
-                left_index = j-1; right_index = j+1;
-                int prev_state = grid_current[i*m+j];
-                int num_alive  = 
-                                grid_current[i*m+j-1] + 
-                                grid_current[i*m+j+1] + 
-                                grid_current[top_index + left_index] + 
-                                grid_current[top_index + j] + 
-                                grid_current[top_index + right_index] + 
-                                grid_current[bottom_index + left_index] + 
-                                grid_current[bottom_index + j] + 
-                                grid_current[bottom_index + right_index];
+        num_alive = 0;
 
-                grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
+        for (j=0; j<m; j++) {
+            send_bottom_row[j] = grid_current[(rows_per_worker - 1) * m + j];
+        }
+        for (j=0; j<m; j++) {
+            send_top_row[j] = grid_current[j];
+        }
+        /* for first worker, no need to receive a top row,
+           for last worker, no need to receive a bottom row,
+           for all others, send and receive top and bottom */
+        if (taskid == 0) {
+
+            // send bottom row, receive top row of next worker
+            MPI_Sendrecv(&send_bottom_row, m, MPI_INT, taskid+1, 1,
+                &recv_top_row, m, MPI_INT, taskid+1, 1, MPI_COMM_WORLD,
+                &status);
+
+            for (i=1; i<rows_per_worker; i++) {
+                for (j=1; j<m-1; j++) {
+                    int prev_state = grid_current[i*m+j];
+
+                    /* for the last row, update number of alive cells
+                    from received top row, otherwise update with
+                    assigned rows */
+                    if (i == rows_per_worker - 1) {
+                        num_alive += recv_top_row[j-1] + recv_top_row[j] +
+                        recv_top_row[j+1];
+                    }
+                    else {
+                        num_alive += grid_current[(i+1)*m+j-1] + 
+                                     grid_current[(i+1)*m+j  ] + 
+                                     grid_current[(i+1)*m+j+1];
+                    }
+
+                    // update for rows from assigned grid
+                    num_alive  += 
+                                grid_current[(i  )*m+j-1] + 
+                                grid_current[(i  )*m+j+1] + 
+                                grid_current[(i-1)*m+j-1] + 
+                                grid_current[(i-1)*m+j  ] + 
+                                grid_current[(i-1)*m+j+1];
+                    
+                    // update the cell in grid next to be alive or dead     
+                    grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
+                }
+            }
+        }
+        else if (taskid == p-1) {
+
+            // send top row, receive bottom row of previous worker
+            MPI_Sendrecv(&send_top_row, m, MPI_INT, taskid-1, 1,
+                &recv_bottom_row, m, MPI_INT, taskid-1, 1, MPI_COMM_WORLD,
+                &status);
+
+            for (i=0; i<rows_per_worker + (m % p); i++) {
+                for (j=1; j<m-1; j++) {
+                    int prev_state = grid_current[i*m+j];
+
+                    /* for the first row, update number of alive cells
+                    from received top row, otherwise update with
+                    assigned rows */
+                    if (i == 0) {
+                        num_alive += recv_bottom_row[j-1] + recv_bottom_row[j]
+                        + recv_bottom_row[j+1];
+                    }
+                    else {
+                        num_alive += grid_current[(i-1)*m+j-1] + 
+                                     grid_current[(i-1)*m+j  ] + 
+                                     grid_current[(i-1)*m+j+1];
+                    }
+                    
+                    // update for rows from assigned grid
+                    num_alive  += 
+                                grid_current[(i  )*m+j-1] + 
+                                grid_current[(i  )*m+j+1] + 
+                                grid_current[(i-1)*m+j-1] + 
+                                grid_current[(i-1)*m+j  ] + 
+                                grid_current[(i-1)*m+j+1] +
+                                grid_current[(i+1)*m+j-1] + 
+                                grid_current[(i+1)*m+j  ] + 
+                                grid_current[(i+1)*m+j+1];
+
+                    // update the cell in grid next to be alive or dead
+                    grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
+                }
+            }
+        }
+        else {
+
+            /* send top row, receive bottom row of previous worker
+               send bottom row, receive top row of next worker */
+            MPI_Sendrecv(&send_top_row, m, MPI_INT, taskid-1, 1,
+                &recv_bottom_row, m, MPI_INT, taskid-1, 1, MPI_COMM_WORLD,
+                &status);
+            MPI_Sendrecv(&send_bottom_row, m, MPI_INT, taskid+1, 1,
+                &recv_top_row, m, MPI_INT, taskid+1, 1, MPI_COMM_WORLD,
+                &status);
+
+            for (i=0; i<rows_per_worker + (m % p); i++) {
+                for (j=0; j<m-1; j++) {
+                    int prev_state = grid_current[i*m+j];
+                    
+                    /* for the first row, update number of alive cells
+                    from received top row, for the bottom row, update 
+                    from received bottom row, otherwise update with
+                    assigned rows */
+                    if (i == 0) {
+                        num_alive += recv_bottom_row[j-1] + recv_bottom_row[j] +
+                        recv_bottom_row[j+1];
+                    }
+                    else if (i == rows_per_worker - 1) {
+                        num_alive += recv_top_row[j-1] + recv_top_row[j]
+                        + recv_top_row[j+1];
+                    }
+                    else {
+                        num_alive += grid_current[(i-1)*m+j-1] + 
+                                      grid_current[(i-1)*m+j  ] + 
+                                      grid_current[(i-1)*m+j+1] +
+                                      grid_current[(i+1)*m+j-1] + 
+                                      grid_current[(i+1)*m+j  ] + 
+                                      grid_current[(i+1)*m+j+1];
+                    }
+
+                    // update for rows from assigned grid
+                    num_alive  += 
+                                grid_current[(i  )*m+j-1] + 
+                                grid_current[(i  )*m+j+1];
+
+                    // update the cell in grid next to be alive or dead
+                    grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
+                }
             }
         }
         /* swap current and next */
