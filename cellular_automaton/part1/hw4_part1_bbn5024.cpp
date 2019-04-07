@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
 
     int top_index, bottom_index, left_index, right_index;
     int taskid, numtasks, start_row, end_row;
-    int m, k, p;
+    unsigned long m, k, p;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
@@ -46,6 +46,9 @@ int main(int argc, char **argv) {
     int *grid_next;
 
     int i, j, t;
+
+    printf("%d", taskid);
+    return 0;
 
     // if last worker, handle any extra rows
     if (taskid == p) {
@@ -232,7 +235,6 @@ int main(int argc, char **argv) {
                     else if (i == rows_per_worker - 1) {
                         num_alive += recv_top_row[j-1] + recv_top_row[j]
                         + recv_top_row[j+1];
-                        num_alive += grid_current[(i-1)*m+j-1] + 
                                       grid_current[(i-1)*m+j  ] + 
                                       grid_current[(i-1)*m+j+1];
                     }
