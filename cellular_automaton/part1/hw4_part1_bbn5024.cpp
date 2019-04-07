@@ -36,8 +36,6 @@ int main(int argc, char **argv) {
     k = atol(argv[2]);
     p = atol(argv[3]);
 
-    printf("%d", taskid);
-
     int rows_per_worker = floor(m / p);
 
     int *grid_current;
