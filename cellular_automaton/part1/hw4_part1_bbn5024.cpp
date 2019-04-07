@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     int i, j, t;
 
     // if last worker, handle any extra rows
-    if (taskid == p-1) {
+    if (taskid == p) {
 
         grid_current = (int *) malloc(rows_per_worker + (m % p) * m * sizeof(int));
         if (grid_current == NULL) {
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
     int *recv_bottom_row;
     int num_alive;
 
-    // arrays used for MPI_Sendrecv
+    // arrays used for sendrecv
     send_top_row = (int *) malloc(m * sizeof(int));
     send_bottom_row = (int *) malloc(m * sizeof(int));
     recv_top_row = (int *) malloc(m * sizeof(int));
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        else if (taskid == p-1) {
+        else if (taskid == p) {
 
             // send top row, receive bottom row of previous worker
             MPI_Sendrecv(&send_top_row, m, MPI_INT, taskid-1, 1,
