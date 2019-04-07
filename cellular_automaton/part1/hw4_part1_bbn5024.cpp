@@ -50,13 +50,13 @@ int main(int argc, char **argv) {
     // if last worker, handle any extra rows
     if (taskid == p) {
 
-        grid_current = (int *) malloc(rows_per_worker + (m % p) * m * sizeof(int));
+        grid_current = (int *) malloc((rows_per_worker + (m % p)) * m * sizeof(int));
         if (grid_current == NULL) {
             printf("Error allocating memory for grid_current!\n");
             exit(1);
         }
 
-        grid_next = (int *) malloc(rows_per_worker + (m % p) * m * sizeof(int));
+        grid_next = (int *) malloc((rows_per_worker + (m % p)) * m * sizeof(int));
         if (grid_next == NULL) {
             printf("Error allocating memory for grid_next!\n");
             exit(1);
