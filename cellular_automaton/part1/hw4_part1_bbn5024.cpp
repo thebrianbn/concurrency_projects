@@ -92,6 +92,14 @@ int main(int argc, char **argv) {
         }
     }
 
+    // make some cells alive
+    if (taskid == floor(p/2)) {
+        grid_current[m*rows_per_worker/2 + m/2 + 0] = 1;
+        grid_current[m*rows_per_worker/2 + m/2 + 1] = 1;
+        grid_current[m*rows_per_worker/2 + m/2 + 2] = 1;
+        grid_current[m*rows_per_worker/2 + m/2 + 3] = 1;
+    }
+
     int *send_top_row;
     int *send_bottom_row;
     int *recv_top_row;
