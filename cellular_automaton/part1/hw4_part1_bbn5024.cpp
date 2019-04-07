@@ -277,6 +277,8 @@ int main(int argc, char **argv) {
 
     /* free memory */
     free(grid_current); free(grid_next);
+    free(send_top_row); free(send_bottom_row);
+    free(recv_top_row); free(recv_bottom_row);
 
     MPI_Finalize();
 
