@@ -10,13 +10,16 @@
 
 # Get started
 
-echo "Job started on ‘hostname‘ at ‘date‘"
+echo "#-#-#Job started on `hostname` at `date` "
+echo This job runs on the following processors:
+echo `cat $PBS_NODEFILE`
 
-# Load in gcc
-
+#-#-# Modules
 module purge
 module load intel/16.0.3
 module load impi/5.1.3
+
+ulimit -s 10240
 
 # Go to work directory
 
@@ -24,8 +27,15 @@ cd ~/concurrency_projects/cellular_automaton/part1/
 
 # Compile code
 
-mpicc -o hw4_part1_bbn5024 hw4_part1_bbn5024.cpp -O3 -mavx 1500000 10 100
+mpicc -o hw4_part1_bbn5024.out hw4_part1_bbn5024.cpp -O3 -mavx 1500000 10 100
 
-# Run code
+#-#-# Echo
+echo "#-#-#Compilation completed and execution started at `date`"
+# Output the time here for possible debugging purposes.
 
-./hw4_part1_bbn5024
+#-#-# Run
+mpirun -np 100 ./hw4_part1_bbn5024.out > log.hw4_part1_bbn5024.out_$PBS_JOBID
+
+#-#-# Echo
+echo "#-#-#Job Ended at `date`"
+# Output the time here for possible debugging purposes.
