@@ -20,7 +20,6 @@ int main(int argc, char **argv) {
     int taskid, numtasks, start_row, end_row;
     unsigned long m, k, p;
 
-    /*
     if (argc != 4) {
         printf("%s <m> <k>\n", argv[0]);
         printf("Program for parallel Game of Life\n");
@@ -30,19 +29,12 @@ int main(int argc, char **argv) {
         printf("(initial pattern specified inside code)\n");
 		exit(1);
     }
-    */
 
     /* receive grid dimensions, generation amount, and worker amount from
     command line */
-    /*
     m = atol(argv[1]);
     k = atol(argv[2]);
     p = atol(argv[3]);
-    */
-    
-    m = 10000;
-    k = 10;
-    p = 100;
 
     int rows_per_worker = floor(m / p);
 
