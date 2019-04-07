@@ -50,19 +50,19 @@ int main(int argc, char **argv) {
     // if last worker, handle any extra rows
     if (taskid == p) {
 
-        grid_current = (int *) malloc((rows_per_worker + (m % p)) * m * sizeof(int));
+        grid_current = (int *) malloc((rows_per_worker + (m % numtasks)) * m * sizeof(int));
         if (grid_current == NULL) {
             printf("Error allocating memory for grid_current!\n");
             exit(1);
         }
 
-        grid_next = (int *) malloc((rows_per_worker + (m % p)) * m * sizeof(int));
+        grid_next = (int *) malloc((rows_per_worker + (m % numtasks)) * m * sizeof(int));
         if (grid_next == NULL) {
             printf("Error allocating memory for grid_next!\n");
             exit(1);
         }
 
-        for (i=0; i<rows_per_worker + (m % p); i++) {
+        for (i=0; i<rows_per_worker + (m % numtasks); i++) {
             for (j=0; j<m; j++) {
                 grid_current[i*m+j] = 0;
                 grid_next[i*m+j] = 0;
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
                 &recv_bottom_row, m, MPI_INT, taskid-1, 2, MPI_COMM_WORLD,
                 &status);
 
-            for (i=0; i<rows_per_worker + (m % p); i++) {
+            for (i=0; i<rows_per_worker + (m % numtasks); i++) {
                 for (j=1; j<m-1; j++) {
                     int prev_state = grid_current[i*m+j];
 
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
                 &recv_top_row, m, MPI_INT, taskid+1, 2, MPI_COMM_WORLD,
                 &status);
 
-            for (i=0; i<rows_per_worker + (m % p); i++) {
+            for (i=0; i<rows_per_worker + (m % numtasks); i++) {
                 for (j=1; j<m-1; j++) {
                     int prev_state = grid_current[i*m+j];
                     
