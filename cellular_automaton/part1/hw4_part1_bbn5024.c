@@ -173,10 +173,14 @@ int main(int argc, char **argv) {
         }
         else if (taskid == p) {
 
+            printf("BEFORE Task: %d\n", taskid);
+
             // send top row, receive bottom row of previous worker
             MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
                 recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
+
+            printf("AFTER Task: %d\n", taskid);
 
             for (i=0; i<rows_per_worker + (m % numtasks); i++) {
                 for (j=1; j<m-1; j++) {
@@ -210,8 +214,6 @@ int main(int argc, char **argv) {
         }
         else {
 
-            printf("BEFORE Task: %d\n", taskid);
-
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
             MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
@@ -220,8 +222,6 @@ int main(int argc, char **argv) {
             MPI_Sendrecv(send_bottom_row, m, MPI_INT, dest_down, 0,
                 recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
-
-            printf("AFTER Task: %d\n", taskid);
 
             for (i=0; i<rows_per_worker + (m % numtasks); i++) {
                 for (j=1; j<m-1; j++) {
