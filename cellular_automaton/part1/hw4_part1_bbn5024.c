@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     k = atol(argv[2]);
     p = numtasks - 1;
 
-    int rows_per_worker = floor(m / p);
+    int rows_per_worker = floor(m / numtasks);
 
     int *grid_current;
     int *grid_next;
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     }
 
     // make some cells alive
-    if (taskid == floor(p/2)) {
+    if (taskid == floor(numtasks/2)) {
         grid_current[m*rows_per_worker/2 + m/2 + 0] = 1;
         grid_current[m*rows_per_worker/2 + m/2 + 1] = 1;
         grid_current[m*rows_per_worker/2 + m/2 + 2] = 1;
