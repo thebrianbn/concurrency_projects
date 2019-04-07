@@ -1,4 +1,4 @@
-CC=mpic++
+CC=mpicc
 CFLAGS= -O3 -mavx -std=c++11
 DEPS = 
 OBJ = hw4_part1_bbn5024.o
