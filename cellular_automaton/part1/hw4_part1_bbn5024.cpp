@@ -20,7 +20,11 @@ int main(int argc, char **argv) {
     int taskid, numtasks, start_row, end_row;
     unsigned long m, k, p;
 
-    if (argc != 4) {
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
+
+    if (argc != 3) {
         printf("%s <m> <k>\n", argv[0]);
         printf("Program for parallel Game of Life\n");
         printf("with 1D grid partitioning\n");
@@ -34,18 +38,12 @@ int main(int argc, char **argv) {
     command line */
     m = atol(argv[1]);
     k = atol(argv[2]);
-    p = atol(argv[3]);
+    p = numtasks - 1;
 
     int rows_per_worker = floor(m / p);
 
     int *grid_current;
     int *grid_next;
-
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
-    MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
-    
-    printf("%d", taskid);
 
     int i, j, t;
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -l nodes=100:ppn=1
+#PBS -l nodes=10:ppn=1
 
 #PBS -l walltime=5:00
 
@@ -27,7 +27,7 @@ cd ~/concurrency_projects/cellular_automaton/part1/
 
 # Compile code
 
-mpicc -o hw4_part1_bbn5024.out hw4_part1_bbn5024.cpp -O3 -mavx
+mpicc -o hw4_part1_bbn5024 hw4_part1_bbn5024.cpp
 
 #-#-# Echo
 echo "#-#-#Compilation completed and execution started at `date`"
