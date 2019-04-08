@@ -173,44 +173,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        else if (taskid == p) {
-
-            // send top row, receive bottom row of previous worker
-            MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
-                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
-                &status);
-
-            for (i=0; i<rows_per_worker + (m % numtasks); i++) {
-                for (j=1; j<m-1; j++) {
-                    int prev_state = grid_current[i*m+j];
-
-                    /* for the first row, update number of alive cells
-                    from received top row, otherwise update with
-                    assigned rows */
-                    if (i == 0) {
-                        num_alive += recv_bottom_row[j-1] + recv_bottom_row[j]
-                        + recv_bottom_row[j+1];
-                    }
-                    else {
-                        num_alive += grid_current[(i-1)*m+j-1] + 
-                                     grid_current[(i-1)*m+j  ] + 
-                                     grid_current[(i-1)*m+j+1];
-                    }
-                    
-                    // update for rows from assigned grid
-                    num_alive  += 
-                                grid_current[(i  )*m+j-1] + 
-                                grid_current[(i  )*m+j+1] + 
-                                grid_current[(i+1)*m+j-1] + 
-                                grid_current[(i+1)*m+j  ] + 
-                                grid_current[(i+1)*m+j+1];
-
-                    // update the cell in grid next to be alive or dead
-                    grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
-                }
-            }
-        }
-        else {
+        else if (taskid != p) {
 
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
@@ -259,8 +222,47 @@ int main(int argc, char **argv) {
 
                     // update the cell in grid next to be alive or dead
                     grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
+            
                 }
             }
+        }
+        else {
+
+            // send top row, receive bottom row of previous worker
+            MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
+                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
+                &status);
+
+            for (i=0; i<rows_per_worker + (m % numtasks); i++) {
+                for (j=1; j<m-1; j++) {
+                    int prev_state = grid_current[i*m+j];
+
+                    /* for the first row, update number of alive cells
+                    from received top row, otherwise update with
+                    assigned rows */
+                    if (i == 0) {
+                        num_alive += recv_bottom_row[j-1] + recv_bottom_row[j]
+                        + recv_bottom_row[j+1];
+                    }
+                    else {
+                        num_alive += grid_current[(i-1)*m+j-1] + 
+                                     grid_current[(i-1)*m+j  ] + 
+                                     grid_current[(i-1)*m+j+1];
+                    }
+                    
+                    // update for rows from assigned grid
+                    num_alive  += 
+                                grid_current[(i  )*m+j-1] + 
+                                grid_current[(i  )*m+j+1] + 
+                                grid_current[(i+1)*m+j-1] + 
+                                grid_current[(i+1)*m+j  ] + 
+                                grid_current[(i+1)*m+j+1];
+
+                    // update the cell in grid next to be alive or dead
+                    grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
+                }
+            }
+            
         }
         /* swap current and next */
         int *grid_tmp  = grid_next;
