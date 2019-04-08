@@ -3,7 +3,7 @@ CFLAGS= -O3 -mavx
 DEPS = 
 OBJ = hw4_part1_bbn5024.o
 
-%.o: %.cpp $(DEPS)
+%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 hw4_part1_bbn5024: $(OBJ)

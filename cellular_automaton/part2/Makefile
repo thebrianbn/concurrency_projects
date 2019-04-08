@@ -1,9 +1,9 @@
-CC=g++
-CFLAGS= -O3 -mavx -std=c++11
+CC=mpicc
+CFLAGS= -O3 -mavx
 DEPS = 
 OBJ = hw4_part2_bbn5024.o
 
-%.o: %.cpp $(DEPS)
+%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 hw4_part2_bbn5024: $(OBJ)

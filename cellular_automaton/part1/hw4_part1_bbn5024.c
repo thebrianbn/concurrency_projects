@@ -110,18 +110,18 @@ int main(int argc, char **argv) {
     int dest_up = taskid-1;
     int dest_down = taskid+1;
 
+    // arrays used for sendrecv
+    send_top_row = (int *) malloc(m * sizeof(int));
+    send_bottom_row = (int *) malloc(m * sizeof(int));
+    recv_top_row = (int *) malloc(m * sizeof(int));
+    recv_bottom_row = (int *) malloc(m * sizeof(int));
+
     double d_startTime = 0.0, d_endTime = 0.0;
     d_startTime = get_walltime();
     
     /* for each generation, update the game of life board with p
     number of workers */
     for (t=0; t<k; t++) {
-
-        // arrays used for sendrecv
-        send_top_row = (int *) malloc(m * sizeof(int));
-        send_bottom_row = (int *) malloc(m * sizeof(int));
-        recv_top_row = (int *) malloc(m * sizeof(int));
-        recv_bottom_row = (int *) malloc(m * sizeof(int));
 
         printf("Generation: %d\n", t);
 
@@ -175,14 +175,10 @@ int main(int argc, char **argv) {
         }
         else if (taskid == p) {
 
-            printf("BEFORE Task: %d\n", taskid);
-
             // send top row, receive bottom row of previous worker
             MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
                 recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
-
-            printf("AFTER Task: %d\n", taskid);
 
             for (i=0; i<rows_per_worker + (m % numtasks); i++) {
                 for (j=1; j<m-1; j++) {
