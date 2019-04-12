@@ -18,8 +18,8 @@ static double get_walltime() {
 int main(int argc, char **argv) {
 
     int top_index, bottom_index, left_index, right_index;
-    int taskid, numtasks, start_row, end_row;
-    unsigned long m, k, p;
+    int taskid, numtasks, start_row, end_row, p;
+    unsigned long m, k;
     MPI_Status status;
 
     MPI_Init(&argc, &argv);
@@ -171,12 +171,13 @@ int main(int argc, char **argv) {
 
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
-            MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, taskid+1, 0,
-                recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
-                &status);
             MPI_Sendrecv(grid_current, m, MPI_INT, taskid-1, 0,
                 recv_bottom_row, m, MPI_INT, taskid-1, 0, MPI_COMM_WORLD,
                 &status);
+            MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, taskid+1, 0,
+                recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
+                &status);
+            
 
             for (i=0; i<rows_per_worker; i++) {
                 for (j=1; j<m-1; j++) {
