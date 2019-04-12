@@ -1,20 +1,25 @@
 #!/bin/bash
 
-#PBS -l nodes=1:ppn=1
+#PBS -l nodes=100:ppn=1
 
-#PBS -l walltime=5:00
+#PBS -l walltime=2:00
 
-#PBS -l pmem=4gb
+#PBS -l pmem=5gb
 
 #PBS -A open
 
 # Get started
 
-echo "Job started on ‘hostname‘ at ‘date‘"
+echo "#-#-#Job started on `hostname` at `date` "
+echo This job runs on the following processors:
+echo `cat $PBS_NODEFILE`
 
-# Load in gcc
+#-#-# Modules
+module purge
+module load intel/16.0.3
+module load impi/5.1.3
 
-module load gcc
+ulimit -s 10240
 
 # Go to work directory
 
@@ -22,8 +27,15 @@ cd ~/concurrency_projects/cellular_automaton/part2/
 
 # Compile code
 
-g++ -o hw4_part2_bbn5024 hw4_part2_bbn5024.cpp -O3 -mavx
+mpicc -o hw4_part2_bbn5024 hw4_part2_bbn5024.c -O3 -mavx
 
-# Run code
+#-#-# Echo
+echo "#-#-#Compilation completed and execution started at `date`"
+# Output the time here for possible debugging purposes.
 
-./hw4_part2_bbn5024
+#-#-# Run
+mpirun -np 100 ./hw4_part2_bbn5024 150000 10
+
+#-#-# Echo
+echo "#-#-#Job Ended at `date`"
+# Output the time here for possible debugging purposes.

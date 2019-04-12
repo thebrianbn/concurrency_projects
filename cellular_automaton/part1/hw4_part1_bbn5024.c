@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
     number of workers */
     for (t=0; t<k; t++) {
 
-        int num_alive = 0;
+        int num_alive;
         int prev_state;
 
         /* for first worker, no need to receive a top row,
@@ -209,34 +209,41 @@ int main(int argc, char **argv) {
                 recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
 
-            for (i=1; i<rows_per_worker; i++) {
+            for (i=1; i<rows_per_worker-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
 
-                    /* for the last row, update number of alive cells
-                    from received top row, otherwise update with
-                    assigned rows */
-                    if (i == rows_per_worker - 1) {
-                        num_alive += recv_top_row[j-1] + recv_top_row[j] +
-                        recv_top_row[j+1];
-                    }
-                    else {
-                        num_alive += grid_current[(i+1)*m+j-1] + 
-                                     grid_current[(i+1)*m+j  ] + 
-                                     grid_current[(i+1)*m+j+1];
-                    }
-
-                    // update for rows from assigned grid
-                    num_alive  += 
-                                grid_current[(i  )*m+j-1] + 
-                                grid_current[(i  )*m+j+1] + 
-                                grid_current[(i-1)*m+j-1] + 
-                                grid_current[(i-1)*m+j  ] + 
-                                grid_current[(i-1)*m+j+1];
-                    
+                    num_alive = grid_current[(i+1)*m+j-1] + 
+                                 grid_current[(i+1)*m+j  ] + 
+                                 grid_current[(i+1)*m+j+1] +
+                                 grid_current[(i  )*m+j-1] + 
+                                 grid_current[(i  )*m+j+1] + 
+                                 grid_current[(i-1)*m+j-1] + 
+                                 grid_current[(i-1)*m+j  ] + 
+                                 grid_current[(i-1)*m+j+1];
+                                               
                     // update the cell in grid next to be alive or dead     
                     grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
                 }
+            }
+
+            /* for the last row, update number of alive cells
+                    from received top row, otherwise update with
+                    assigned rows */
+            for (j=1; j<m-1; j++) {
+                prev_state = grid_current[j];
+
+                num_alive = recv_top_row[j-1] + recv_top_row[j]
+                        + recv_top_row[j+1];
+
+                num_alive += grid_current[(rows_per_worker-2)*m+j-1] + 
+                             grid_current[(rows_per_worker-2)*m+j  ] + 
+                             grid_current[(rows_per_worker-2)*m+j+1] +
+                             grid_current[(rows_per_worker-1)*m+j-1] + 
+                             grid_current[(rows_per_worker-1)*m+j+1];
+
+                // update the cell in grid next to be alive or dead
+                grid_next[(rows_per_worker-1)*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
             }
         }
         else if (taskid != p) {
@@ -249,40 +256,37 @@ int main(int argc, char **argv) {
             MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, taskid+1, 0,
                 recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
-            
-            for (i=0; i<rows_per_worker; i++) {
-                for (j=1; j<m-1; j++) {
-                    prev_state = grid_current[i*m+j];
-                    
-                    /* for the first row, update number of alive cells
+
+            /* for the first row, update number of alive cells
                     from received top row, for the bottom row, update 
                     from received bottom row, otherwise update with
                     assigned rows */
-                    if (i == 0) {
-                        num_alive += recv_bottom_row[j-1] + recv_bottom_row[j] +
-                        recv_bottom_row[j+1];
-                        num_alive += grid_current[(i+1)*m+j-1] + 
-                                      grid_current[(i+1)*m+j  ] + 
-                                      grid_current[(i+1)*m+j+1];
-                    }
-                    else if (i == rows_per_worker - 1) {
-                        num_alive += recv_top_row[j-1] + recv_top_row[j]
-                        + recv_top_row[j+1];
-                        num_alive += grid_current[(i-1)*m+j-1] + 
-                                      grid_current[(i-1)*m+j  ] + 
-                                      grid_current[(i-1)*m+j+1];
-                    }
-                    else {
-                        num_alive += grid_current[(i-1)*m+j-1] + 
-                                      grid_current[(i-1)*m+j  ] + 
-                                      grid_current[(i-1)*m+j+1] +
-                                      grid_current[(i+1)*m+j-1] + 
-                                      grid_current[(i+1)*m+j  ] + 
-                                      grid_current[(i+1)*m+j+1];
-                    }
+            for (j=1; j<m-1; j++) {
+                prev_state = grid_current[j];
 
-                    // update for rows from assigned grid
-                    num_alive  += 
+                num_alive = recv_bottom_row[j-1] + recv_bottom_row[j] +
+                        recv_bottom_row[j+1];
+
+                num_alive += grid_current[m+j-1] + 
+                             grid_current[m+j  ] + 
+                             grid_current[m+j+1] +
+                             grid_current[j-1] + 
+                             grid_current[j+1];
+
+                // update the cell in grid next to be alive or dead
+                grid_next[j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
+            }
+            
+            for (i=1; i<rows_per_worker-1; i++) {
+                for (j=1; j<m-1; j++) {
+                    prev_state = grid_current[i*m+j];
+                    
+                    num_alive = grid_current[(i-1)*m+j-1] + 
+                                grid_current[(i-1)*m+j  ] + 
+                                grid_current[(i-1)*m+j+1] +
+                                grid_current[(i+1)*m+j-1] + 
+                                grid_current[(i+1)*m+j  ] + 
+                                grid_current[(i+1)*m+j+1] +
                                 grid_current[(i  )*m+j-1] + 
                                 grid_current[(i  )*m+j+1];
 
@@ -290,6 +294,22 @@ int main(int argc, char **argv) {
                     grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
             
                 }
+            }
+
+            for (j=1; j<m-1; j++) {
+                prev_state = grid_current[j];
+
+                num_alive = recv_top_row[j-1] + recv_top_row[j]
+                        + recv_top_row[j+1];
+
+                num_alive += grid_current[(rows_per_worker-2)*m+j-1] + 
+                             grid_current[(rows_per_worker-2)*m+j  ] + 
+                             grid_current[(rows_per_worker-2)*m+j+1] +
+                             grid_current[(rows_per_worker-1)*m+j-1] + 
+                             grid_current[(rows_per_worker-1)*m+j+1];
+
+                // update the cell in grid next to be alive or dead
+                grid_next[(rows_per_worker-1)*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
             }
         }
         else {
@@ -299,30 +319,41 @@ int main(int argc, char **argv) {
                 recv_bottom_row, m, MPI_INT, taskid-1, 0, MPI_COMM_WORLD,
                 &status);
 
-            for (i=0; i<rows_per_worker + (m % numtasks)-1; i++) {
+            /* for the first row, update number of alive cells
+                    from received bottom row, otherwise update with
+                    assigned rows */
+            for (j=1; j<m-1; j++) {
+                prev_state = grid_current[j];
+
+                num_alive = recv_bottom_row[j-1] + recv_bottom_row[j]
+                        + recv_bottom_row[j+1];
+
+                // update for rows from assigned grid
+                num_alive  += 
+                            grid_current[j-1] + 
+                            grid_current[j+1] + 
+                            grid_current[m+j-1] + 
+                            grid_current[m+j  ] + 
+                            grid_current[m+j+1];
+
+                // update the cell in grid next to be alive or dead
+                grid_next[j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
+            }
+
+            for (i=1; i<rows_per_worker + (m % numtasks)-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
 
-                    /* for the first row, update number of alive cells
-                    from received bottom row, otherwise update with
-                    assigned rows */
-                    if (i == 0) {
-                        num_alive += recv_bottom_row[j-1] + recv_bottom_row[j]
-                        + recv_bottom_row[j+1];
-                    }
-                    else {
-                        num_alive += grid_current[(i-1)*m+j-1] + 
-                                     grid_current[(i-1)*m+j  ] + 
-                                     grid_current[(i-1)*m+j+1];
-                    }
-                    
                     // update for rows from assigned grid
-                    num_alive  += 
+                    num_alive  = 
                                 grid_current[(i  )*m+j-1] + 
                                 grid_current[(i  )*m+j+1] + 
                                 grid_current[(i+1)*m+j-1] + 
                                 grid_current[(i+1)*m+j  ] + 
-                                grid_current[(i+1)*m+j+1];
+                                grid_current[(i+1)*m+j+1] +
+                                grid_current[(i-1)*m+j-1] + 
+                                grid_current[(i-1)*m+j  ] + 
+                                grid_current[(i-1)*m+j+1];
 
                     // update the cell in grid next to be alive or dead
                     grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);

@@ -1,5 +1,7 @@
 // Author: Brian Nguyen
 
+#include <mpi.h>
+#include <math.h> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
