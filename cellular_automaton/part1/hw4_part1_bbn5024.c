@@ -55,12 +55,14 @@ int main(int argc, char **argv) {
         grid_current = (int *) malloc((rows_per_worker + (m % numtasks)) * m * sizeof(int));
         if (grid_current == NULL) {
             printf("Error allocating memory for grid_current!\n");
+            MPI_Finalize();
             exit(1);
         }
 
         grid_next = (int *) malloc((rows_per_worker + (m % numtasks)) * m * sizeof(int));
         if (grid_next == NULL) {
             printf("Error allocating memory for grid_next!\n");
+            MPI_Finalize();
             exit(1);
         }
 
@@ -77,12 +79,14 @@ int main(int argc, char **argv) {
         grid_current = (int *) malloc(rows_per_worker * m * sizeof(int));
         if (grid_current == NULL) {
             printf("Error allocating memory for grid_current!\n");
+            MPI_Finalize();
             exit(1);
         }
 
         grid_next = (int *) malloc(rows_per_worker * m * sizeof(int));
         if (grid_next == NULL) {
             printf("Error allocating memory for grid_next!\n");
+            MPI_Finalize();
             exit(1);
         }
 
@@ -114,8 +118,6 @@ int main(int argc, char **argv) {
     // arrays used for sendrecv
     send_top_row = (int *) malloc(m * sizeof(int));
     send_bottom_row = (int *) malloc(m * sizeof(int));
-    recv_top_row = (int *) malloc(m * sizeof(int));
-    recv_bottom_row = (int *) malloc(m * sizeof(int));
 
     double d_startTime = 0.0, d_endTime = 0.0;
     d_startTime = get_walltime();
