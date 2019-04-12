@@ -282,6 +282,8 @@ int main(int argc, char **argv) {
         worker_times = (double *) malloc(numtasks * sizeof(double));
         worker_times[0] = d_endTime - d_startTime;
 
+        double worker_time_current;
+
         // put in data from worker 0
         for (i=0; i<rows_per_worker; i++) {
             for (j=0; j<m; j++) {
@@ -295,7 +297,7 @@ int main(int argc, char **argv) {
 
             MPI_Recv(grid_current, rows_per_worker*m, MPI_INT, workerid, 0,
                 MPI_COMM_WORLD, &status);
-            MPI_Recv(worker_times[workerid], 1, MPI_INT, workerid, 0,
+            MPI_Recv(&worker_time_current, 1, MPI_DOUBLE, workerid, 0,
                 MPI_COMM_WORLD, &status);
 
             for (i=0; i<rows_per_worker; i++) {
@@ -303,17 +305,20 @@ int main(int argc, char **argv) {
                     grid_whole[(rows_per_worker*workerid*m)+(i*m+j)] = grid_current[i*m+j];
                 }
             }
+            worker_time_current[workerid] = worker_time_current;
         }
 
         // put in data from last worker
-        MPI_Recv(grid_whole[p * rows_per_worker * m], (rows_per_worker + (m % p)) *m, MPI_INT, p, 0,
+        MPI_Recv(grid_current, (rows_per_worker + (m % p)) *m, MPI_INT, p, 0,
                 MPI_COMM_WORLD, &status);
-        MPI_Recv(worker_times[p], 1, MPI_INT, p, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&worker_time_current, 1, MPI_INT, p, 0, MPI_COMM_WORLD, &status);
 
         for (i=0; i<rows_per_worker + (m % numtasks)-1; i++) {
-                for (j=1; j<m-1; j++) {
-                    grid_whole[(rows_per_worker*p*m)+(i*m+j)] = grid_current[i*m+j];
-                }
+            for (j=1; j<m-1; j++) {
+                grid_whole[(rows_per_worker*p*m)+(i*m+j)] = grid_current[i*m+j];
+            }
+        }
+        worker_time_current[p] = worker_time_current;
     }
     else if (taskid == p) {
         MPI_Send(grid_current, (rows_per_worker + (m % p)) * m, MPI_INT, 0, 0, MPI_COMM_WORLD);
