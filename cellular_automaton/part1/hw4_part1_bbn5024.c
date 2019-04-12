@@ -22,10 +22,6 @@ int main(int argc, char **argv) {
     unsigned long m, k;
     MPI_Status status;
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
-    MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
-
     if (argc != 3) {
         printf("%s <m> <k>\n", argv[0]);
         printf("Program for parallel Game of Life\n");
@@ -33,8 +29,12 @@ int main(int argc, char **argv) {
         printf("<m>: grid dimension (an mxm grid is created)\n");
         printf("<k>: number of time steps\n");
         printf("(initial pattern specified inside code)\n");
-		exit(1);
+        exit(1);
     }
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
 
     /* receive grid dimensions, generation amount, and worker amount from
     command line */
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
                 recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
 
-            for (i=1; i<rows_per_worker; i++) {
+            for (i=1; i<rows_per_worker-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
 
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
                 &status);
             
 
-            for (i=0; i<rows_per_worker; i++) {
+            for (i=0; i<rows_per_worker-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
                     
@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
                 recv_bottom_row, m, MPI_INT, taskid-1, 0, MPI_COMM_WORLD,
                 &status);
 
-            for (i=0; i<rows_per_worker + (m % numtasks); i++) {
+            for (i=0; i<rows_per_worker + (m % numtasks)-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
 
