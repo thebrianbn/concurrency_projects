@@ -4,7 +4,7 @@
 
 #PBS -l walltime=1:00
 
-#PBS -l pmem=5gb
+#PBS -l pmem=1gb
 
 #PBS -A open
 

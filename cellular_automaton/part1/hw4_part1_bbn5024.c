@@ -260,8 +260,6 @@ int main(int argc, char **argv) {
             
         }
 
-        MPI_Barrier(MPI_COMM_WORLD);
-
         /* swap current and next */
         int *grid_tmp  = grid_next;
         grid_next = grid_current;
