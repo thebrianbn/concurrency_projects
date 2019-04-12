@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     int *grid_current;
     int *grid_next;
 
-    int i, j;
+    int i, j, t;
 
     // if last worker, handle any extra rows
     if (taskid == p) {
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
     
     /* for each generation, update the game of life board with p
     number of workers */
-    for (int t=0; t<k; t++) {
+    for (t=0; t<k; t++) {
 
         printf("Generation: %d\n", t);
 
