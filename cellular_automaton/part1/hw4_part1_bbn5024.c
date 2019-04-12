@@ -272,6 +272,34 @@ int main(int argc, char **argv) {
 
     if (taskid == 0) {
 
+        int *grid_whole;
+        grid_whole = (int *) malloc(m * m * sizeof(int));
+
+        int *worker_times;
+        worker_times = (double *) malloc(numtasks * sizeof(double));
+        worker_times[0] = d_endTime - d_startTime;
+
+        &grid_whole[0] = grid_current;
+
+        int workerid;
+        for (workerid=1; workerid < numtasks-1; workerid++) {
+            MPI_Recv(grid_whole[workerid * rows_per_worker * m], rows_per_worker*m, MPI_INT, workerid, 0
+                MPI_COMM_WORLD, &status);
+            MPI_Recv(worker_times[workerid], 1, MPI_INT, workerid, 0
+                MPI_COMM_WORLD, &status);
+        }
+        MPI_Recv(grid_whole[p * rows_per_worker * m], (rows_per_worker + (m % p)) *m, MPI_INT, p, 0
+                MPI_COMM_WORLD, &status);
+        MPI_Recv(worker_times[p], 1, MPI_INT, p, 0
+                MPI_COMM_WORLD, &status);
+    }
+    else if (taskid == p) {
+        MPI_Send(grid_current, (rows_per_worker + (m % p)) * m, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(d_endTime-d_startTime, 1, MPI_DOUBLE, 0 ,0, MPI_COMM_WORLD);
+    }
+    else {
+        MPI_Send(grid_current, rows_per_worker * m, MPI_INT, 0 ,0, MPI_COMM_WORLD);
+        MPI_Send(d_endTime-d_startTime, 1, MPI_DOUBLE, 0 ,0, MPI_COMM_WORLD);
     }
 
     /* free memory */
