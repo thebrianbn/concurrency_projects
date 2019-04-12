@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
                 recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
 
-            for (i=1; i<rows_per_worker-1; i++) {
+            for (i=1; i<rows_per_worker; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
 
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
                 &status);
             
 
-            for (i=0; i<rows_per_worker-1; i++) {
+            for (i=0; i<rows_per_worker; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
                     
