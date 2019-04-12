@@ -47,10 +47,11 @@ void serial_life(int m, int k, int *board) {
     }
 
     /* initializing some cells in the middle */
-    grid_current[m*m/2 + m/2 + 0] = 1;
-    grid_current[m*m/2 + m/2 + 1] = 1;
-    grid_current[m*m/2 + m/2 + 2] = 1;
-    grid_current[m*m/2 + m/2 + 3] = 1;
+    for (i=0, i<2; i++) {
+        for (j=0; j<m, j++) {
+            grid_current[i*m+j] = 1;
+        }
+    }
 
     double d_startTime = 0.0, d_endTime = 0.0;
     d_startTime = get_walltime();
@@ -172,11 +173,12 @@ int main(int argc, char **argv) {
     }
 
     // make some cells alive
-    if (taskid == floor(numtasks/2)) {
-        grid_current[m*rows_per_worker/2 + m/2 + 0] = 1;
-        grid_current[m*rows_per_worker/2 + m/2 + 1] = 1;
-        grid_current[m*rows_per_worker/2 + m/2 + 2] = 1;
-        grid_current[m*rows_per_worker/2 + m/2 + 3] = 1;
+    if (taskid == 0) {
+        for (i=0, i<2; i++) {
+            for (j=0; j<m, j++) {
+                grid_current[i*m+j] = 1;
+            }
+        }
     }
 
     int *recv_top_row;
@@ -249,7 +251,6 @@ int main(int argc, char **argv) {
                 recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
             
-
             for (i=0; i<rows_per_worker; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
@@ -341,10 +342,11 @@ int main(int argc, char **argv) {
 
     double time_diff = d_endTime - d_startTime;
 
-    printf("Time taken: %3.3lf s.\n", time_diff);
+    printf("Time taken for worker %d: %3.3lf s.\n", taskid, time_diff);
     printf("Performance: %3.3lf billion cell updates/s\n", 
                 (1.0*m*m)*k/((d_endTime - d_startTime)*1e9));
 
+    // collect all grid results in worker 0, and create the final grid
     if (taskid == 0) {
 
         int *grid_whole;
@@ -400,6 +402,7 @@ int main(int argc, char **argv) {
 
         serial_life(m, k, serial_board);
 
+        // compare the serial grid against the parallel grid
         int verify_failed = 0;
         for (i=0; i<m; i++) {
             for (j=0; j<m; j++) {
@@ -412,7 +415,7 @@ int main(int argc, char **argv) {
         printf("Failed count: %d\n", verify_failed);
 
         free(last_grid); free(grid_whole);
-        free(worker_times);
+        free(worker_times); free(serial_board);
     }
     else if (taskid == p) {
         MPI_Send(grid_current, (rows_per_worker + (m % p)) * m, MPI_INT, 0, 0, MPI_COMM_WORLD);
