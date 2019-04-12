@@ -266,7 +266,9 @@ int main(int argc, char **argv) {
 
     d_endTime = get_walltime();
 
-    printf("Time taken: %3.3lf s.\n", d_endTime - d_startTime);
+    double time_diff = d_endTime - d_startTime;
+
+    printf("Time taken: %3.3lf s.\n", time_diff);
     printf("Performance: %3.3lf billion cell updates/s\n", 
                 (1.0*m*m)*k/((d_endTime - d_startTime)*1e9));
 
@@ -305,7 +307,7 @@ int main(int argc, char **argv) {
                     grid_whole[(rows_per_worker*workerid*m)+(i*m+j)] = grid_current[i*m+j];
                 }
             }
-            worker_time_current[workerid] = worker_time_current;
+            worker_times[workerid] = worker_time_current;
         }
 
         // put in data from last worker
@@ -318,22 +320,23 @@ int main(int argc, char **argv) {
                 grid_whole[(rows_per_worker*p*m)+(i*m+j)] = grid_current[i*m+j];
             }
         }
-        worker_time_current[p] = worker_time_current;
+        worker_times[p] = worker_time_current;
+
+        free(last_grid); free(grid_whole);
+        free(worker_times);
     }
     else if (taskid == p) {
         MPI_Send(grid_current, (rows_per_worker + (m % p)) * m, MPI_INT, 0, 0, MPI_COMM_WORLD);
-        MPI_Send(d_endTime-d_startTime, 1, MPI_DOUBLE, 0 ,0, MPI_COMM_WORLD);
+        MPI_Send(&time_diff, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
     else {
-        MPI_Send(grid_current, rows_per_worker * m, MPI_INT, 0 ,0, MPI_COMM_WORLD);
-        MPI_Send(d_endTime-d_startTime, 1, MPI_DOUBLE, 0 ,0, MPI_COMM_WORLD);
+        MPI_Send(grid_current, rows_per_worker * m, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(&time_diff, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
 
     /* free memory */
     free(grid_current); free(grid_next);
     free(recv_top_row); free(recv_bottom_row);
-    free(last_grid); free(grid_whole);
-    free(worker_times);
 
     MPI_Finalize();
 
