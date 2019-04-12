@@ -46,9 +46,9 @@ void serial_life(int m, int k, int *board) {
         }
     }
 
-    /* initializing some cells in the middle */
-    for (i=0; i<2; i++) {
-        for (j=0; j<m; j++) {
+    /* initializing some cells */
+    for (i=1; i<3; i++) {
+        for (j=1; j<m-1; j++) {
             grid_current[i*m+j] = 1;
         }
     }
@@ -174,8 +174,8 @@ int main(int argc, char **argv) {
 
     // make some cells alive
     if (taskid == 0) {
-        for (i=0; i<2; i++) {
-            for (j=0; j<m; j++) {
+        for (i=1; i<3; i++) {
+            for (j=1; j<m-1; j++) {
                 grid_current[i*m+j] = 1;
             }
         }
