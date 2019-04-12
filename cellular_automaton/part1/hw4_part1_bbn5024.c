@@ -263,6 +263,8 @@ int main(int argc, char **argv) {
         int *grid_tmp  = grid_next;
         grid_next = grid_current;
         grid_current = grid_tmp;
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     d_endTime = get_walltime();
