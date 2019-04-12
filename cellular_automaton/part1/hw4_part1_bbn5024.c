@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     int *grid_current;
     int *grid_next;
 
-    int i, j, t;
+    int i, j;
 
     // if last worker, handle any extra rows
     if (taskid == p) {
@@ -106,48 +106,38 @@ int main(int argc, char **argv) {
         grid_current[m*rows_per_worker/2 + m/2 + 3] = 1;
     }
 
-    int send_top_row[m];
-    int send_bottom_row[m];
-    int recv_top_row[m];
-    int recv_bottom_row[m];
+    int *send_top_row;
+    int *send_bottom_row;
+    int *recv_top_row;
+    int *recv_bottom_row;
     int num_alive;
     int dest_up = taskid-1;
     int dest_down = taskid+1;
     int prev_state;
 
-    /*
     // arrays used for sendrecv
-    send_top_row = (int *) malloc(m * sizeof(int));
-    send_bottom_row = (int *) malloc(m * sizeof(int));
     recv_top_row = (int *) malloc(m * sizeof(int));
     recv_bottom_row = (int *) malloc(m * sizeof(int));
-    */
 
     double d_startTime = 0.0, d_endTime = 0.0;
     d_startTime = get_walltime();
     
     /* for each generation, update the game of life board with p
     number of workers */
-    for (t=0; t<k; t++) {
+    for (int t=0; t<k; t++) {
 
         printf("Generation: %d\n", t);
 
         num_alive = 0;
 
-        for (j=0; j<m; j++) {
-            send_bottom_row[j] = grid_current[(rows_per_worker - 1) * m + j];
-        }
-        for (j=0; j<m; j++) {
-            send_top_row[j] = grid_current[j];
-        }
         /* for first worker, no need to receive a top row,
            for last worker, no need to receive a bottom row,
            for all others, send and receive top and bottom */
         if (taskid == 0) {
 
             // send bottom row, receive top row of next worker
-            MPI_Sendrecv(&send_bottom_row, m, MPI_INT, dest_down, 0,
-                &recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
+            MPI_Sendrecv(&grid_currrent[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
+                recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=1; i<rows_per_worker; i++) {
@@ -184,11 +174,11 @@ int main(int argc, char **argv) {
 
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
-            MPI_Sendrecv(&send_bottom_row, m, MPI_INT, dest_down, 0,
-                &recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
+            MPI_Sendrecv(&grid_currrent[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
+                recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
-            MPI_Sendrecv(&send_top_row, m, MPI_INT, dest_up, 0,
-                &recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
+            MPI_Sendrecv(&grid_currrent[0], m, MPI_INT, dest_up, 0,
+                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=0; i<rows_per_worker; i++) {
@@ -236,8 +226,8 @@ int main(int argc, char **argv) {
         else {
 
             // send top row, receive bottom row of previous worker
-            MPI_Sendrecv(&send_top_row, m, MPI_INT, dest_up, 0,
-                &recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
+            MPI_Sendrecv(&grid_currrent[0], m, MPI_INT, dest_up, 0,
+                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=0; i<rows_per_worker + (m % numtasks); i++) {
@@ -285,6 +275,7 @@ int main(int argc, char **argv) {
 
     /* free memory */
     free(grid_current); free(grid_next);
+    free(recv_top_row); free(recv_bottom_row);
 
     MPI_Finalize();
 
