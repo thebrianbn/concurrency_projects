@@ -122,8 +122,6 @@ int main(int argc, char **argv) {
     number of workers */
     for (t=0; t<k; t++) {
 
-        printf("Generation: %d, Worker: %d\n", t, taskid);
-
         int num_alive = 0;
         int prev_state;
 
@@ -264,7 +262,6 @@ int main(int argc, char **argv) {
         grid_next = grid_current;
         grid_current = grid_tmp;
 
-        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     d_endTime = get_walltime();
@@ -273,11 +270,14 @@ int main(int argc, char **argv) {
     printf("Performance: %3.3lf billion cell updates/s\n", 
                 (1.0*m*m)*k/((d_endTime - d_startTime)*1e9));
 
+    if (taskid == 0) {
+
+    }
+
     /* free memory */
     free(grid_current); free(grid_next);
     free(recv_top_row); free(recv_bottom_row);
 
-    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 
     return 0;
