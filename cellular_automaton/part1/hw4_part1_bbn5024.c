@@ -222,14 +222,21 @@ int main(int argc, char **argv) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
 
-                    num_alive = grid_current[(i+1)*m+j-1] + 
-                                grid_current[(i+1)*m+j  ] + 
-                                grid_current[(i+1)*m+j+1] +
-                                grid_current[(i  )*m+j-1] + 
-                                grid_current[(i  )*m+j+1] + 
-                                grid_current[(i-1)*m+j-1] + 
-                                grid_current[(i-1)*m+j  ] + 
-                                grid_current[(i-1)*m+j+1];
+                    // avoid repeated calculations
+                    int top_index = (i-1)*m;
+                    int bottom_index = (i+1)*m;
+                    int center_index = i*m;
+                    int left_shift = j-1;
+                    int right_shift = j+1;
+
+                    num_alive = grid_current[center_index+left_shift] + 
+                                grid_current[center_index+right_shift] + 
+                                grid_current[top_index+left_shift] + 
+                                grid_current[top_ndex+j] + 
+                                grid_current[top_index+right_shift] + 
+                                grid_current[bottom_index+left_shift] + 
+                                grid_current[bottom_index+j  ] + 
+                                grid_current[bottom_index+right_shift];
                                                
                     // update the cell in grid next to be alive or dead     
                     grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
@@ -287,15 +294,22 @@ int main(int argc, char **argv) {
             for (i=1; i<rows_per_worker-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
+
+                    // avoid repeated calculations
+                    int top_index = (i-1)*m;
+                    int bottom_index = (i+1)*m;
+                    int center_index = i*m;
+                    int left_shift = j-1;
+                    int right_shift = j+1;
                     
-                    num_alive = grid_current[(i-1)*m+j-1] + 
-                                grid_current[(i-1)*m+j  ] + 
-                                grid_current[(i-1)*m+j+1] +
-                                grid_current[(i+1)*m+j-1] + 
-                                grid_current[(i+1)*m+j  ] + 
-                                grid_current[(i+1)*m+j+1] +
-                                grid_current[(i  )*m+j-1] + 
-                                grid_current[(i  )*m+j+1];
+                    num_alive = grid_current[center_index+left_shift] + 
+                                grid_current[center_index+right_shift] + 
+                                grid_current[top_index+left_shift] + 
+                                grid_current[top_ndex+j] + 
+                                grid_current[top_index+right_shift] + 
+                                grid_current[bottom_index+left_shift] + 
+                                grid_current[bottom_index+j  ] + 
+                                grid_current[bottom_index+right_shift];
 
                     // update the cell in grid next to be alive or dead
                     grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
@@ -352,15 +366,22 @@ int main(int argc, char **argv) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
 
+                    // avoid repeated calculations
+                    int top_index = (i-1)*m;
+                    int bottom_index = (i+1)*m;
+                    int center_index = i*m;
+                    int left_shift = j-1;
+                    int right_shift = j+1;
+
                     num_alive  = 
-                                grid_current[(i  )*m+j-1] + 
-                                grid_current[(i  )*m+j+1] + 
-                                grid_current[(i+1)*m+j-1] + 
-                                grid_current[(i+1)*m+j  ] + 
-                                grid_current[(i+1)*m+j+1] +
-                                grid_current[(i-1)*m+j-1] + 
-                                grid_current[(i-1)*m+j  ] + 
-                                grid_current[(i-1)*m+j+1];
+                                grid_current[center_index+left_shift] + 
+                                grid_current[center_index+right_shift] + 
+                                grid_current[top_index+left_shift] + 
+                                grid_current[top_ndex+j] + 
+                                grid_current[top_index+right_shift] + 
+                                grid_current[bottom_index+left_shift] + 
+                                grid_current[bottom_index+j  ] + 
+                                grid_current[bottom_index+right_shift];
 
                     // update the cell in grid next to be alive or dead
                     grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
@@ -402,7 +423,8 @@ int main(int argc, char **argv) {
         // put in data from worker 0
         for (i=0; i<rows_per_worker; i++) {
             for (j=0; j<m; j++) {
-                grid_whole[i*m+j] = grid_current[i*m+j];
+                int current_index = i*m+j;
+                grid_whole[current_index] = grid_current[current_index];
             }
         }
 
@@ -417,7 +439,8 @@ int main(int argc, char **argv) {
 
             for (i=0; i<rows_per_worker; i++) {
                 for (j=0; j<m; j++) {
-                    grid_whole[(rows_per_worker*workerid*m)+(i*m+j)] = grid_current[i*m+j];
+                    int current_index = i*m+j;
+                    grid_whole[(rows_per_worker*workerid*m)+current_index] = grid_current[current_index];
                 }
             }
             worker_times[workerid] = worker_time_current;
@@ -430,7 +453,8 @@ int main(int argc, char **argv) {
 
         for (i=0; i<rows_per_worker + (m % numtasks); i++) {
             for (j=0; j<m; j++) {
-                grid_whole[(rows_per_worker*p*m)+(i*m+j)] = last_grid[i*m+j];
+                int current_index = i*m+j;
+                grid_whole[(rows_per_worker*p*m)+current_index] = last_grid[current_index];
             }
         }
         worker_times[p] = worker_time_current;
@@ -442,7 +466,8 @@ int main(int argc, char **argv) {
         int verify_failed = 0;
         for (i=0; i<m; i++) {
             for (j=0; j<m; j++) {
-                if (grid_whole[i*m+j] != serial_board[i*m+j]) {
+                int current_index = i*m+j;
+                if (grid_whole[current_index] != serial_board[current_index]) {
                     verify_failed += 1;
                 }
             }
