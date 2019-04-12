@@ -137,6 +137,7 @@ int main(int argc, char **argv) {
             MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
                 recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
+            MPI_Barrier(MPI_COMM_WORLD);
 
             for (i=1; i<rows_per_worker; i++) {
                 for (j=1; j<m-1; j++) {
@@ -175,9 +176,11 @@ int main(int argc, char **argv) {
             MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
                 recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
+            MPI_Barrier(MPI_COMM_WORLD);
             MPI_Sendrecv(&grid_current[0], m, MPI_INT, dest_up, 0,
                 recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
+            MPI_Barrier(MPI_COMM_WORLD);
 
             for (i=0; i<rows_per_worker; i++) {
                 for (j=1; j<m-1; j++) {
@@ -227,6 +230,7 @@ int main(int argc, char **argv) {
             MPI_Sendrecv(&grid_current[0], m, MPI_INT, dest_up, 0,
                 recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
+            MPI_Barrier(MPI_COMM_WORLD);
 
             for (i=0; i<rows_per_worker + (m % numtasks); i++) {
                 for (j=1; j<m-1; j++) {
@@ -264,8 +268,9 @@ int main(int argc, char **argv) {
         grid_next = grid_current;
         grid_current = grid_tmp;
 
-        MPI_Barrier(MPI_COMM_WORLD);
     }
+
+    MPI_Barrier(MPI_COMM_WORLD);
 
     d_endTime = get_walltime();
 
