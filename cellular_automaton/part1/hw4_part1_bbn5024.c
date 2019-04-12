@@ -8,7 +8,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-MPI_Status status;
 
 static double get_walltime() {
     struct timeval tp;
@@ -21,6 +20,7 @@ int main(int argc, char **argv) {
     int top_index, bottom_index, left_index, right_index;
     int taskid, numtasks, start_row, end_row;
     unsigned long m, k, p;
+    MPI_Status status;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
@@ -108,10 +108,8 @@ int main(int argc, char **argv) {
 
     int *recv_top_row;
     int *recv_bottom_row;
-    int num_alive;
     int dest_up = taskid-1;
     int dest_down = taskid+1;
-    int prev_state;
 
     // arrays used for sendrecv
     recv_top_row = (int *) malloc(m * sizeof(int));
@@ -126,7 +124,8 @@ int main(int argc, char **argv) {
 
         printf("Generation: %d, Worker: %d\n", t, taskid);
 
-        num_alive = 0;
+        int num_alive = 0;
+        int prev_state;
 
         /* for first worker, no need to receive a top row,
            for last worker, no need to receive a bottom row,
@@ -175,7 +174,7 @@ int main(int argc, char **argv) {
             MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, taskid+1, 0,
                 recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
-            MPI_Sendrecv(&grid_current[0], m, MPI_INT, taskid-1, 0,
+            MPI_Sendrecv(grid_current, m, MPI_INT, taskid-1, 0,
                 recv_bottom_row, m, MPI_INT, taskid-1, 0, MPI_COMM_WORLD,
                 &status);
 
@@ -224,7 +223,7 @@ int main(int argc, char **argv) {
         else {
 
             // send top row, receive bottom row of previous worker
-            MPI_Sendrecv(&grid_current[0], m, MPI_INT, taskid-1, 0,
+            MPI_Sendrecv(grid_current, m, MPI_INT, taskid-1, 0,
                 recv_bottom_row, m, MPI_INT, taskid-1, 0, MPI_COMM_WORLD,
                 &status);
 
@@ -264,6 +263,7 @@ int main(int argc, char **argv) {
         grid_next = grid_current;
         grid_current = grid_tmp;
 
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     d_endTime = get_walltime();
@@ -276,6 +276,7 @@ int main(int argc, char **argv) {
     free(grid_current); free(grid_next);
     free(recv_top_row); free(recv_bottom_row);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 
     return 0;
