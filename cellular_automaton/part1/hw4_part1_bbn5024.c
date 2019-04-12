@@ -134,8 +134,8 @@ int main(int argc, char **argv) {
         if (taskid == 0) {
 
             // send bottom row, receive top row of next worker
-            MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
-                recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
+            MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, (taskid+1), 0,
+                recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=1; i<rows_per_worker; i++) {
@@ -172,11 +172,11 @@ int main(int argc, char **argv) {
 
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
-            MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
-                recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
+            MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, taskid+1, 0,
+                recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
-            MPI_Sendrecv(&grid_current[0], m, MPI_INT, dest_up, 0,
-                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
+            MPI_Sendrecv(&grid_current[0], m, MPI_INT, taskid-1, 0,
+                recv_bottom_row, m, MPI_INT, taskid-1, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=0; i<rows_per_worker; i++) {
@@ -224,8 +224,8 @@ int main(int argc, char **argv) {
         else {
 
             // send top row, receive bottom row of previous worker
-            MPI_Sendrecv(&grid_current[0], m, MPI_INT, dest_up, 0,
-                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
+            MPI_Sendrecv(&grid_current[0], m, MPI_INT, taskid-1, 0,
+                recv_bottom_row, m, MPI_INT, taskid-1, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=0; i<rows_per_worker + (m % numtasks); i++) {
@@ -257,7 +257,6 @@ int main(int argc, char **argv) {
                     grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
                 }
             }
-            
         }
 
         /* swap current and next */
