@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
         if (taskid == 0) {
 
             // send bottom row, receive top row of next worker
-            MPI_Sendrecv(&grid_currrent[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
+            MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
                 recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
 
@@ -174,10 +174,10 @@ int main(int argc, char **argv) {
 
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
-            MPI_Sendrecv(&grid_currrent[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
+            MPI_Sendrecv(&grid_current[m * (rows_per_worker-1)], m, MPI_INT, dest_down, 0,
                 recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
-            MPI_Sendrecv(&grid_currrent[0], m, MPI_INT, dest_up, 0,
+            MPI_Sendrecv(&grid_current[0], m, MPI_INT, dest_up, 0,
                 recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
 
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
         else {
 
             // send top row, receive bottom row of previous worker
-            MPI_Sendrecv(&grid_currrent[0], m, MPI_INT, dest_up, 0,
+            MPI_Sendrecv(&grid_current[0], m, MPI_INT, dest_up, 0,
                 recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
 
