@@ -15,7 +15,7 @@ static double get_walltime() {
     return ((double) (tp.tv_sec) + 1e-6 * tp.tv_usec);
 }
 
-void serial_life(int m, int k, int *board) {
+int* serial_life(int m, int k) {
 
     int *grid_current;
     int *grid_next;
@@ -90,7 +90,7 @@ void serial_life(int m, int k, int *board) {
         grid_current = grid_tmp;
     }
 
-    board = grid_current;
+    return grid_current;
 
     /* free memory */
     free(grid_current); free(grid_next);
@@ -436,9 +436,7 @@ int main(int argc, char **argv) {
         worker_times[p] = worker_time_current;
 
         // retrieve serial implementation's board
-        int *serial_board;
-        serial_board = (int *) malloc(m * m * sizeof(int));
-        serial_life(m, k, serial_board);
+        int *serial_board = serial_life(m, k);
 
         // compare the serial grid against the parallel grid
         int verify_failed = 0;
