@@ -109,6 +109,7 @@ int main(int argc, char **argv) {
     int num_alive;
     int dest_up = taskid-1;
     int dest_down = taskid+1;
+    int prev_state;
 
     // arrays used for sendrecv
     send_top_row = (int *) malloc(m * sizeof(int));
@@ -140,12 +141,12 @@ int main(int argc, char **argv) {
 
             // send bottom row, receive top row of next worker
             MPI_Sendrecv(send_bottom_row, m, MPI_INT, dest_down, 0,
-                &recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
+                recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=1; i<rows_per_worker; i++) {
                 for (j=1; j<m-1; j++) {
-                    int prev_state = grid_current[i*m+j];
+                    prev_state = grid_current[i*m+j];
 
                     /* for the last row, update number of alive cells
                     from received top row, otherwise update with
@@ -178,15 +179,15 @@ int main(int argc, char **argv) {
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
             MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
-                &recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
+                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
             MPI_Sendrecv(send_bottom_row, m, MPI_INT, dest_down, 0,
-                &recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
+                recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
                 &status);
 
-            for (i=0; i<rows_per_worker + (m % numtasks); i++) {
+            for (i=0; i<rows_per_worker; i++) {
                 for (j=1; j<m-1; j++) {
-                    int prev_state = grid_current[i*m+j];
+                    prev_state = grid_current[i*m+j];
                     
                     /* for the first row, update number of alive cells
                     from received top row, for the bottom row, update 
@@ -230,12 +231,12 @@ int main(int argc, char **argv) {
 
             // send top row, receive bottom row of previous worker
             MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
-                &recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
+                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=0; i<rows_per_worker + (m % numtasks); i++) {
                 for (j=1; j<m-1; j++) {
-                    int prev_state = grid_current[i*m+j];
+                    prev_state = grid_current[i*m+j];
 
                     /* for the first row, update number of alive cells
                     from received bottom row, otherwise update with
