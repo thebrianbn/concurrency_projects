@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
     number of workers */
     for (t=0; t<k; t++) {
 
-        printf("Generation: %d\n", t);
+        printf("Generation: %d, Worker: %d\n", t, taskid);
 
         num_alive = 0;
 
