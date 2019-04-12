@@ -91,8 +91,7 @@ void serial_life(int m, int k, int *board) {
 
 int main(int argc, char **argv) {
 
-    int top_index, bottom_index, left_index, right_index;
-    int taskid, numtasks, start_row, end_row, p;
+    int taskid, numtasks, p;
     unsigned long m, k;
     MPI_Status status;
 
@@ -347,6 +346,7 @@ int main(int argc, char **argv) {
                 (1.0*m*m)*k/((d_endTime - d_startTime)*1e9));
 
     // collect all grid results in worker 0, and create the final grid
+    // other workers send their grids and times
     if (taskid == 0) {
 
         int *grid_whole;
@@ -397,9 +397,9 @@ int main(int argc, char **argv) {
         }
         worker_times[p] = worker_time_current;
 
+        // retrieve serial implementation's board
         int *serial_board;
         serial_board = (int *) malloc(m * m * sizeof(int));
-
         serial_life(m, k, serial_board);
 
         // compare the serial grid against the parallel grid
@@ -414,6 +414,7 @@ int main(int argc, char **argv) {
 
         printf("Failed count: %d\n", verify_failed);
 
+        // free memeory
         free(last_grid); free(grid_whole);
         free(worker_times); free(serial_board);
     }
@@ -426,7 +427,7 @@ int main(int argc, char **argv) {
         MPI_Send(&time_diff, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
 
-    /* free memory */
+    // free memory
     free(grid_current); free(grid_next);
     free(recv_top_row); free(recv_bottom_row);
 
