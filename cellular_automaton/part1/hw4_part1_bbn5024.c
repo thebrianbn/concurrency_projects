@@ -209,6 +209,7 @@ int main(int argc, char **argv) {
                 recv_top_row, m, MPI_INT, taskid+1, 0, MPI_COMM_WORLD,
                 &status);
 
+            // update with grid for top rows
             for (i=1; i<rows_per_worker-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
@@ -228,8 +229,7 @@ int main(int argc, char **argv) {
             }
 
             /* for the last row, update number of alive cells
-                    from received top row, otherwise update with
-                    assigned rows */
+                    from received top row */
             for (j=1; j<m-1; j++) {
                 prev_state = grid_current[j];
 
@@ -258,9 +258,7 @@ int main(int argc, char **argv) {
                 &status);
 
             /* for the first row, update number of alive cells
-                    from received top row, for the bottom row, update 
-                    from received bottom row, otherwise update with
-                    assigned rows */
+                    from received bottom row */
             for (j=1; j<m-1; j++) {
                 prev_state = grid_current[j];
 
@@ -277,6 +275,7 @@ int main(int argc, char **argv) {
                 grid_next[j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
             }
             
+            // update with grid for middle rows
             for (i=1; i<rows_per_worker-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
@@ -296,6 +295,7 @@ int main(int argc, char **argv) {
                 }
             }
 
+            // for the bottom row, update from received top row
             for (j=1; j<m-1; j++) {
                 prev_state = grid_current[j];
 
@@ -320,8 +320,7 @@ int main(int argc, char **argv) {
                 &status);
 
             /* for the first row, update number of alive cells
-                    from received bottom row, otherwise update with
-                    assigned rows */
+                    from received bottom row, */
             for (j=1; j<m-1; j++) {
                 prev_state = grid_current[j];
 
@@ -340,11 +339,11 @@ int main(int argc, char **argv) {
                 grid_next[j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
             }
 
+            // update with grid for rest of rows
             for (i=1; i<rows_per_worker + (m % numtasks)-1; i++) {
                 for (j=1; j<m-1; j++) {
                     prev_state = grid_current[i*m+j];
 
-                    // update for rows from assigned grid
                     num_alive  = 
                                 grid_current[(i  )*m+j-1] + 
                                 grid_current[(i  )*m+j+1] + 
