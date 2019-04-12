@@ -4,7 +4,7 @@
 
 #PBS -l walltime=1:00
 
-#PBS -l pmem=1gb
+#PBS -l pmem=5gb
 
 #PBS -A open
 
@@ -34,7 +34,7 @@ echo "#-#-#Compilation completed and execution started at `date`"
 # Output the time here for possible debugging purposes.
 
 #-#-# Run
-mpirun -np 5 ./hw4_part1_bbn5024 1500 1
+mpirun -np 5 ./hw4_part1_bbn5024 500 5
 
 #-#-# Echo
 echo "#-#-#Job Ended at `date`"
