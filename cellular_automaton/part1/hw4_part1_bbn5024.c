@@ -286,6 +286,8 @@ int main(int argc, char **argv) {
         for (i=0; i<rows_per_worker; i++) {
             for (j=0; j<m; j++) {
                 grid_whole[i*m+j] = grid_current[i*m+j];
+            }
+        }
 
         // put in data from middle workers
         int workerid;
@@ -299,6 +301,8 @@ int main(int argc, char **argv) {
             for (i=0; i<rows_per_worker; i++) {
                 for (j=0; j<m; j++) {
                     grid_whole[(rows_per_worker*workerid*m)+(i*m+j)] = grid_current[i*m+j];
+                }
+            }
         }
 
         // put in data from last worker
@@ -309,6 +313,7 @@ int main(int argc, char **argv) {
         for (i=0; i<rows_per_worker + (m % numtasks)-1; i++) {
                 for (j=1; j<m-1; j++) {
                     grid_whole[(rows_per_worker*p*m)+(i*m+j)] = grid_current[i*m+j];
+                }
     }
     else if (taskid == p) {
         MPI_Send(grid_current, (rows_per_worker + (m % p)) * m, MPI_INT, 0, 0, MPI_COMM_WORLD);
