@@ -75,7 +75,7 @@ int* serial_life(int m, int k) {
                                 grid_current[center_index+left_shift] + 
                                 grid_current[center_index+right_shift] + 
                                 grid_current[top_index+left_shift] + 
-                                grid_current[top_ndex+j] + 
+                                grid_current[top_index+j] + 
                                 grid_current[top_index+right_shift] + 
                                 grid_current[bottom_index+left_shift] + 
                                 grid_current[bottom_index+j  ] + 
@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
                     num_alive = grid_current[center_index+left_shift] + 
                                 grid_current[center_index+right_shift] + 
                                 grid_current[top_index+left_shift] + 
-                                grid_current[top_ndex+j] + 
+                                grid_current[top_index+j] + 
                                 grid_current[top_index+right_shift] + 
                                 grid_current[bottom_index+left_shift] + 
                                 grid_current[bottom_index+j  ] + 
@@ -305,7 +305,7 @@ int main(int argc, char **argv) {
                     num_alive = grid_current[center_index+left_shift] + 
                                 grid_current[center_index+right_shift] + 
                                 grid_current[top_index+left_shift] + 
-                                grid_current[top_ndex+j] + 
+                                grid_current[top_index+j] + 
                                 grid_current[top_index+right_shift] + 
                                 grid_current[bottom_index+left_shift] + 
                                 grid_current[bottom_index+j  ] + 
@@ -377,7 +377,7 @@ int main(int argc, char **argv) {
                                 grid_current[center_index+left_shift] + 
                                 grid_current[center_index+right_shift] + 
                                 grid_current[top_index+left_shift] + 
-                                grid_current[top_ndex+j] + 
+                                grid_current[top_index+j] + 
                                 grid_current[top_index+right_shift] + 
                                 grid_current[bottom_index+left_shift] + 
                                 grid_current[bottom_index+j  ] + 
