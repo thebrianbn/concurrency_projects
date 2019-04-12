@@ -15,7 +15,7 @@ static double get_walltime() {
     return ((double) (tp.tv_sec) + 1e-6 * tp.tv_usec);
 }
 
-void serial_life(int m, int k, int **board) {
+void serial_life(int m, int k, int *board) {
 
     int *grid_current;
     int *grid_next;
