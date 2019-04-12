@@ -275,22 +275,40 @@ int main(int argc, char **argv) {
         int *grid_whole;
         grid_whole = (int *) malloc(m * m * sizeof(int));
 
+        int *last_grid;
+        last_grid = (int *) malloc((rows_per_worker + (m % numtasks)) * m * sizeof(int));
+
         double *worker_times;
         worker_times = (double *) malloc(numtasks * sizeof(double));
         worker_times[0] = d_endTime - d_startTime;
 
-        grid_whole = grid_current;
+        // put in data from worker 0
+        for (i=0; i<rows_per_worker; i++) {
+            for (j=0; j<m; j++) {
+                grid_whole[i*m+j] = grid_current[i*m+j];
 
+        // put in data from middle workers
         int workerid;
         for (workerid=1; workerid < numtasks-1; workerid++) {
-            MPI_Recv(grid_whole[workerid * rows_per_worker * m], rows_per_worker*m, MPI_INT, workerid, 0,
+
+            MPI_Recv(grid_current, rows_per_worker*m, MPI_INT, workerid, 0,
                 MPI_COMM_WORLD, &status);
             MPI_Recv(worker_times[workerid], 1, MPI_INT, workerid, 0,
                 MPI_COMM_WORLD, &status);
+
+            for (i=0; i<rows_per_worker; i++) {
+                for (j=0; j<m; j++) {
+                    grid_whole[(rows_per_worker*workerid*m)+(i*m+j)] = grid_current[i*m+j];
         }
+
+        // put in data from last worker
         MPI_Recv(grid_whole[p * rows_per_worker * m], (rows_per_worker + (m % p)) *m, MPI_INT, p, 0,
                 MPI_COMM_WORLD, &status);
         MPI_Recv(worker_times[p], 1, MPI_INT, p, 0, MPI_COMM_WORLD, &status);
+
+        for (i=0; i<rows_per_worker + (m % numtasks)-1; i++) {
+                for (j=1; j<m-1; j++) {
+                    grid_whole[(rows_per_worker*p*m)+(i*m+j)] = grid_current[i*m+j];
     }
     else if (taskid == p) {
         MPI_Send(grid_current, (rows_per_worker + (m % p)) * m, MPI_INT, 0, 0, MPI_COMM_WORLD);
@@ -304,6 +322,8 @@ int main(int argc, char **argv) {
     /* free memory */
     free(grid_current); free(grid_next);
     free(recv_top_row); free(recv_bottom_row);
+    free(last_grid); free(grid_whole);
+    free(worker_times);
 
     MPI_Finalize();
 
