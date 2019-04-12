@@ -178,11 +178,11 @@ int main(int argc, char **argv) {
 
             /* send top row, receive bottom row of previous worker
                send bottom row, receive top row of next worker */
-            MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
-                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
-                &status);
             MPI_Sendrecv(send_bottom_row, m, MPI_INT, dest_down, 0,
                 recv_top_row, m, MPI_INT, dest_down, 0, MPI_COMM_WORLD,
+                &status);
+            MPI_Sendrecv(send_top_row, m, MPI_INT, dest_up, 0,
+                recv_bottom_row, m, MPI_INT, dest_up, 0, MPI_COMM_WORLD,
                 &status);
 
             for (i=0; i<rows_per_worker; i++) {
