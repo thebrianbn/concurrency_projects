@@ -17,22 +17,6 @@ static double get_walltime() {
 
 void serial_life(int m, int k, &board) {
 
-    if (argc != 3) {
-        printf("%s <m> <k>\n", argv[0]);
-        printf("Program for parallel Game of Life\n");
-        printf("with 1D grid partitioning\n");
-        printf("<m>: grid dimension (an mxm grid is created)\n");
-        printf("<k>: number of time steps\n");
-        printf("(initial pattern specified inside code)\n");
-        exit(1);
-    }
-
-    unsigned long m, k;
-
-    m = atol(argv[1]);
-
-    k = atol(argv[2]);
-
     int *grid_current;
     int *grid_next;
     
