@@ -313,7 +313,7 @@ int main(int argc, char **argv) {
         // put in data from last worker
         MPI_Recv(last_grid, (rows_per_worker + (m % p)) *m, MPI_INT, p, 0,
                 MPI_COMM_WORLD, &status);
-        MPI_Recv(&worker_time_current, 1, MPI_INT, p, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&worker_time_current, 1, MPI_DOUBLE, p, 0, MPI_COMM_WORLD, &status);
 
         for (i=0; i<rows_per_worker + (m % numtasks); i++) {
             for (j=0; j<m; j++) {
