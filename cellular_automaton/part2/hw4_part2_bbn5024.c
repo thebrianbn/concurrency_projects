@@ -75,15 +75,24 @@ int main(int argc, char **argv) {
             for (j=1; j<m-1; j++) {
                 /* avoiding conditionals inside inner loop */
                 int prev_state = grid_current[i*m+j];
+                // avoid repeated calculations
+                int top_index = (i-1)*m;
+                int bottom_index = (i+1)*m;
+                int center_index = i*m;
+                int left_shift = j-1;
+                int right_shift = j+1;
+
+                /* avoiding conditionals inside inner loop */
+                int prev_state = grid_current[i*m+j];
                 int num_alive  = 
-                                grid_current[(i  )*m+j-1] + 
-                                grid_current[(i  )*m+j+1] + 
-                                grid_current[(i-1)*m+j-1] + 
-                                grid_current[(i-1)*m+j  ] + 
-                                grid_current[(i-1)*m+j+1] + 
-                                grid_current[(i+1)*m+j-1] + 
-                                grid_current[(i+1)*m+j  ] + 
-                                grid_current[(i+1)*m+j+1];
+                                grid_current[center_index+left_shift] + 
+                                grid_current[center_index+right_shift] + 
+                                grid_current[top_index+left_shift] + 
+                                grid_current[top_index+j] + 
+                                grid_current[top_index+right_shift] + 
+                                grid_current[bottom_index+left_shift] + 
+                                grid_current[bottom_index+j  ] + 
+                                grid_current[bottom_index+right_shift];
 
                 grid_next[i*m+j] = prev_state * ((num_alive == 2) + (num_alive == 3)) + (1 - prev_state) * (num_alive == 3);
             }
