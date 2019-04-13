@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#PBS -l nodes=50:ppn=1
+#PBS -l nodes=10:ppn=1
 
 #PBS -l walltime=5:00
 
-#PBS -l pmem=25gb
+#PBS -l pmem=10gb
 
 #PBS -A open
 
@@ -34,7 +34,7 @@ echo "#-#-#Compilation completed and execution started at `date`"
 # Output the time here for possible debugging purposes.
 
 #-#-# Run
-mpirun -np 50 ./hw4_part1_bbn5024 50000 10
+mpirun -np 10 ./hw4_part1_bbn5024 20000 10
 
 #-#-# Echo
 echo "#-#-#Job Ended at `date`"
