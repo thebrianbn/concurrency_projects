@@ -2,7 +2,7 @@
 
 #PBS -l nodes=10:ppn=1
 
-#PBS -l walltime=2:00
+#PBS -l walltime=5:00
 
 #PBS -l pmem=1gb
 
