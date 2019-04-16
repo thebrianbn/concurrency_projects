@@ -1,3 +1,5 @@
+// Author: Brian Nguyen
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -18,6 +20,8 @@ double myDiffTime(struct timeval &start, struct timeval &end) {
 }
 
 int main() {
+	/* Compare results between serial and parallel versions of the
+	prefix-sums algorithm. */
 
 	// arrays to be used for initial, cpu-result, and gpu-result arrays
 	// respectively.
