@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#define N 1024
+#define N 10000  // number of array elements
+#define B 128*4  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
 __global__ void prescan(float *g_odata, float *g_idata, int n);
@@ -17,11 +18,13 @@ double myDiffTime(struct timeval &start, struct timeval &end) {
 	d_start = (double)(start.tv_sec + start.tv_usec/1000000.0);
 	d_end = (double)(end.tv_sec + end.tv_usec/1000000.0);
 	return (d_end - d_start);
-}
+} 
 
 int main() {
 	/* Compare results between serial and parallel versions of the
 	prefix-sums algorithm. */
+
+	int grid_size = (N / B)-1;
 
 	// arrays to be used for initial, cpu-result, and gpu-result arrays
 	// respectively.
@@ -34,7 +37,7 @@ int main() {
 
 	double d_gpuTime, d_cpuTime;
 
-	// initialize matrix a with random floats
+	// initialize matrix a with random floats between 0 and 1000
 	for (int i = 0; i < N; i++) {
 		a[i] = (float)(rand() % 1000000) / 1000.0;
 	}
@@ -47,7 +50,7 @@ int main() {
 	gettimeofday(&start, NULL);
 	cudaMemcpy(dev_a, a, size, cudaMemcpyHostToDevice);
 	//scan<<<1,N,2*N*sizeof(float)>>>(dev_g, dev_a, N);  // naive scan
-	prescan<<<1,N,2*N*sizeof(float)>>>(dev_g, dev_a, N);  // work-efficient scan
+	prescan<<<grid_size,B/2,B*sizeof(float)>>>(dev_g, dev_a, N);  // work-efficient scan
 	cudaDeviceSynchronize();
 	cudaMemcpy(g, dev_g, size, cudaMemcpyDeviceToHost);
 	gettimeofday(&end, NULL);
@@ -84,10 +87,11 @@ __global__ void scan(float *g_odata, float *g_idata, int n) {
 	extern __shared__ float temp[]; // allocated on invocation
 	int thid = threadIdx.x;
 	int pout = 0, pin = 1;
+
 	// Load input into shared memory.
 	// This is exclusive scan, so shift right by one
 	// and set first element to 0
-	temp[pout*n + thid] = (thid > 0) ? g_idata[thid-1] : 0;
+	temp[thid] = (thid > 0) ? g_idata[thid-1] : 0;
 	__syncthreads();
 	for (int offset = 1; offset < n; offset *= 2) {
 		pout = 1 - pout; // swap double buffer indices
@@ -107,45 +111,53 @@ __global__ void prescan(float *g_odata, float *g_idata, int n) {
 	/* CUDA Work-Efficient Scan Algorithm. */
 
 	extern  __shared__  float temp[]; // allocated on invocation 
-	int thid = threadIdx.x; 
-	int offset = 1; 
+	int thid = threadIdx.x;  // thread id of a thread in a block
+	int gthid = blockIdx.x * blockDim.x + thid; // global thread id of grid
 
-    temp[2*thid] = g_idata[2*thid]; 
-	// load input into shared memory 
-    temp[2*thid+1] = g_idata[2*thid+1];
+	int offset = 1;
+
+	// for each thread in a block, put data into shared memory
+	if (gthid > n) {
+		// handle non-power of two arrays by padding elements in last block
+		temp[thid] = 0;
+	}
+	else {
+		// grab data from input array
+		temp[thid] = g_idata[gthid];
+	}
 
     // build sum in place up the tree 
-	for (int d = n>>1; d > 0; d >>= 1) { 
+	for (int d = B/2>>1; d > 0; d >>= 1) { 
         __syncthreads(); 
 		if (thid < d) { 
 			int ai = offset*(2*thid+1)-1; 
 			int bi = offset*(2*thid+2)-1; 
 		    	temp[bi] += temp[ai];         
-  		} 
+  		}
         	offset *= 2; 
     } 
 
 	if (thid == 0) { 
-		temp[n - 1] = 0; 
-	} 
+		temp[(B/2) - 1] = 0; 
+	}
 
 	// clear the last element 
 	// traverse down tree & build scan
-	for (int d = 1; d < n; d *= 2) { 
+	for (int d = 1; d < B/2; d *= 2) { 
     	offset >>= 1; 
     	__syncthreads(); 
 		if (thid < d) { 
 			int ai = offset*(2*thid+1)-1; 
 			int bi = offset*(2*thid+2)-1; 
-			float t   = temp[ai]; 
-            		temp[ai]  = temp[bi]; 
-            		temp[bi] += t; 
+			float t = temp[ai]; 
+    		temp[ai] = temp[bi]; 
+    		temp[bi] += t; 
     	} 
 	} 
 	__syncthreads(); 
-	g_odata[2*thid]   = temp[2*thid]; 
+	
 	// write results to device memory 
-	g_odata[2*thid+1] = temp[2*thid+1];  
+	g_odata[gthid] = temp[thid]; 
 }
 
 
