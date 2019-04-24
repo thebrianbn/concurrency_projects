@@ -73,16 +73,6 @@ int main() {
 	
 	cudaFree(dev_a); cudaFree(dev_g); cudaFree(dev_sums);
 
-	// display results of the prefix-sum
-	for (int i = 0; i < N; i++) {
-		printf("c[%i] = %0.3f, g[%i] = %0.3f\n", i, c[i], i, g[i]);
-		//if (c[i] != g[i])
-		//{
-		//	printf("Results do not match! c[%i]=%f, g[%i]=%f\n", i, c[i], i, g[i]);
-		//	break;
-		//}
-	}
-
 	for (int j = 0; j < grid_size; j++) {
 		printf("sums[%i] = %0.3f\n", j, sums[j]);
 	}
@@ -142,13 +132,28 @@ int main() {
 	// START OF FINAL UPDATE TO FIRST PREFIX SCAN
 
 	float g3[N], first_add[grid_size];
-	float *dev_g3;
+	float *dev_g3, *dev_first_add;
 
-	cudaMalloc((void **) &dev_g2, size);
-	cudaMalloc((void **) &dev_inc_final, size_sums);
+	cudaMalloc((void **) &dev_g3, size);
+	cudaMalloc((void **) &dev_first_add, size_sums);
 
+	cudaMemcpy(dev_first_add, g2, size_sums, cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_g3, g, size, cudaMemcpyHostToDevice);
 
-	
+	uniform_add<<<grid_size, thread_size, B*sizeof(float)>>>(dev_g3, dev_first_add);
+	cudaDeviceSynchronize();
+
+	cudaMemcpy(g3, dev_g3, size, cudaMemcpyDeviceToHost);
+
+	// display results of the prefix-sum
+	for (int i = 0; i < N; i++) {
+		printf("c[%i] = %0.3f, g3[%i] = %0.3f\n", i, c[i], i, g3[i]);
+		//if (c[i] != g[i])
+		//{
+		//	printf("Results do not match! c[%i]=%f, g[%i]=%f\n", i, c[i], i, g[i]);
+		//	break;
+		//}
+	}
 		
 	printf("GPU Time for scan size %i: %f\n", N, d_gpuTime);
 	printf("CPU Time for scan size %i: %f\n", N, d_cpuTime);
