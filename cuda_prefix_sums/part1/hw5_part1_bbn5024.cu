@@ -48,8 +48,8 @@ int main() {
 	double d_gpuTime, d_cpuTime;
 
 	// initialize matrix a with random doubles between 0 and 1000
-	for (int i = 1; i <= N; i++) {
-		a[i-1] = i;
+	for (int i = 0; i <= N; i++) {
+		a[i] = (double)(rand() % 1000000) / 1000.0;
 	}
 	/*
 	if (!isPowerTwo(N)) {
