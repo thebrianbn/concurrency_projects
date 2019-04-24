@@ -3,14 +3,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <math.h>
 
-#define N 64 // number of array elements
+#define N 1024 // number of array elements
 #define B 4  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
 __global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums);
 __global__ void uniform_add(float *o_array, float *sum_array);
 void scanCPU(float *f_out, float *f_in, int i_n);
+
+bool isPowerTwo(ulong x) {
+    return (x & (x - 1)) == 0;
+}
 
 double myDiffTime(struct timeval &start, struct timeval &end) {
 	/* Calculate the time difference. */
@@ -25,9 +30,9 @@ int main() {
 	/* Compare results between serial and parallel versions of the
 	prefix-sums algorithm. */
 
-	int grid_size = floor(N / B);
-	int thread_size = B / 2;
-	int grid_size2 = grid_size / B;
+	int grid_size = ceil(N / B);  // size of grids for first prefix-scan
+	int grid_size2 = ceil(grid_size / B); // size of grids for second prefix-scan
+	int thread_size = B / 2;  // thread size for each block
 
 	// arrays to be used for initial, cpu-result, and gpu-result arrays
 	// respectively.
@@ -46,6 +51,11 @@ int main() {
 	for (int i = 1; i <= N; i++) {
 		a[i-1] = i;
 	}
+	/*
+	if (!isPowerTwo(N)) {
+		next_power = pow(2, ceil(log(x)/log(2)));
+	}
+	*/
 
 	// CPU version (serial) of prefix-sum
 	gettimeofday(&start, NULL);
@@ -69,13 +79,8 @@ int main() {
 	cudaDeviceSynchronize();
 	cudaMemcpy(g, dev_g, size, cudaMemcpyDeviceToHost);
 	cudaMemcpy(sums, dev_sums, size_sums, cudaMemcpyDeviceToHost);
-	gettimeofday(&end, NULL);
 	
 	cudaFree(dev_a); cudaFree(dev_g); cudaFree(dev_sums);
-
-	for (int j = 0; j < grid_size; j++) {
-		printf("sums[%i] = %0.3f\n", j, sums[j]);
-	}
 
 	// START OF SECOND PRE-SCAN RUN
 
@@ -95,21 +100,9 @@ int main() {
 
 	cudaFree(dev_inc); cudaFree(dev_sums_inc); cudaFree(dev_sums_input);
 
-	
-	for (int j = 0; j < grid_size2; j++) {
-		printf("inc[%i] = %0.3f\n", j, sums_inc[j]);
-	}
-	for (int j = 0; j < grid_size; j++) {
-		printf("inc[%i] = %0.3f\n", j, inc[j]);
-	}
-
 	scanCPU(inc_final, sums_inc, size_sums2);
 
 	// START OF UPDATING SUMS
-
-	for (int j = 0; j < grid_size2; j++) {
-		printf("pscan2[%i] = %0.3f\n", j, inc_final[j]);
-	}
 
 	float g2[grid_size];
 	float *dev_g2;
@@ -124,10 +117,6 @@ int main() {
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(g2, dev_g2, size, cudaMemcpyDeviceToHost);
-
-	for (int j = 0; j < grid_size; j++) {
-		printf("g2[%i] = %0.3f\n", j, g2[j]);
-	}
 
 	// START OF FINAL UPDATE TO FIRST PREFIX SCAN
 
@@ -144,6 +133,11 @@ int main() {
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(g3, dev_g3, size, cudaMemcpyDeviceToHost);
+
+	gettimeofday(&end, NULL);
+	d_cpuTime = myDiffTime(start, end);
+
+	cudaFree(dev_g3); cudaFree(dev_first_add);
 
 	// display results of the prefix-sum
 	for (int i = 0; i < N; i++) {
