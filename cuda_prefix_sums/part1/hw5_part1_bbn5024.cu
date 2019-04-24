@@ -4,12 +4,13 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#define N 1000 // number of array elements
-#define B 1024  // number of elements in a block
+#define N 64 // number of array elements
+#define B 4  // number of elements in a block
 
-__global__ void scan(float *g_odata, float *g_idata, int n);
-__global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums);
-void scanCPU(float *f_out, float *f_in, int i_n);
+__global__ void scan(double *g_odata, double *g_idata, int n);
+__global__ void prescan(double *g_odata, double *g_idata, int n, double *g_sums);
+__global__ void uniform_add(double *o_array, double *sum_array);
+void scanCPU(double *f_out, double *f_in, int i_n);
 
 double myDiffTime(struct timeval &start, struct timeval &end) {
 	/* Calculate the time difference. */
@@ -24,25 +25,35 @@ int main() {
 	/* Compare results between serial and parallel versions of the
 	prefix-sums algorithm. */
 
-	int grid_size = floor(N / B) + 1;
+	int grid_size = floor(N / B);
 	int thread_size = B / 2;
+	int grid_size2 = grid_size / B;
 
 	// arrays to be used for initial, cpu-result, and gpu-result arrays
 	// respectively.
-	float a[N], c[N], g[N], sums[grid_size], inc[grid_size], sums_inc[grid_size];
+	double a[N], c[N], g[N], sums[grid_size];
 	timeval start, end;
 
 	// temporary pointer arrays for computation
-	float *dev_a, *dev_g, *dev_sums, *dev_inc, *dev_sums_inc;
-	int size = N * sizeof(float);
-	int size_sums = grid_size * sizeof(float);
+	double *dev_a, *dev_g, *dev_sums;
+	int size = N * sizeof(double);
+	int size_sums = grid_size * sizeof(double);
+	int size_sums2 = grid_size2 * sizeof(double);
 
 	double d_gpuTime, d_cpuTime;
 
-	// initialize matrix a with random floats between 0 and 1000
-	for (int i = 0; i < N; i++) {
-		a[i] = (float)(rand() % 1000000) / 1000.0;
+	// initialize matrix a with random doubles between 0 and 1000
+	for (int i = 1; i <= N; i++) {
+		a[i-1] = i;
 	}
+
+	// CPU version (serial) of prefix-sum
+	gettimeofday(&start, NULL);
+	scanCPU(c, a, N);
+	gettimeofday(&end, NULL);
+	d_cpuTime = myDiffTime(start, end);
+
+	// START OF FIRST PRE-SCAN RUN
 
 	// initialize a and b matrices here for CUDA
 	cudaMalloc((void **) &dev_a, size);
@@ -52,21 +63,15 @@ int main() {
 	// GPU version (CUDA) of prefix-sum
 	gettimeofday(&start, NULL);
 	cudaMemcpy(dev_a, a, size, cudaMemcpyHostToDevice);
-	//scan<<<1,N,2*N*sizeof(float)>>>(dev_g, dev_a, N);  // naive scan
-	prescan<<<grid_size, thread_size, B*sizeof(float)>>>(dev_g, dev_a, N, dev_sums);  // work-efficient scan
+
+	// work-efficient scan for SUMS array
+	prescan<<<grid_size, thread_size, B*sizeof(double)>>>(dev_g, dev_a, N, dev_sums);
 	cudaDeviceSynchronize();
 	cudaMemcpy(g, dev_g, size, cudaMemcpyDeviceToHost);
 	cudaMemcpy(sums, dev_sums, size_sums, cudaMemcpyDeviceToHost);
 	gettimeofday(&end, NULL);
-	d_gpuTime = myDiffTime(start, end);
-
-	// CPU version (serial) of prefix-sum
-	gettimeofday(&start, NULL);
-	scanCPU(c, a, N);
-	gettimeofday(&end, NULL);
-	d_cpuTime = myDiffTime(start, end);
 	
-	cudaFree(dev_a); cudaFree(dev_g);
+	cudaFree(dev_a); cudaFree(dev_g); cudaFree(dev_sums);
 
 	// display results of the prefix-sum
 	for (int i = 0; i < N; i++) {
@@ -82,28 +87,53 @@ int main() {
 		printf("sums[%i] = %0.3f\n", j, sums[j]);
 	}
 
-	cudaMalloc((void **) &dev_sums, size_sums);
+	// START OF SECOND PRE-SCAN RUN
+
+	double inc[grid_size], sums_inc[grid_size2], inc_final[grid_size2];
+	double *dev_inc, *dev_sums_inc, *dev_inc_final, *dev_sums_input;
+
+	cudaMalloc((void **) &dev_sums_input, size_sums);
 	cudaMalloc((void **) &dev_inc, size_sums);
-	cudaMalloc((void **) &dev_sums_inc, size_sums);
+	cudaMalloc((void **) &dev_sums_inc, size_sums2);
 
-	cudaMemcpy(dev_sums, sums, size_sums, cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_sums_input, sums, size_sums, cudaMemcpyHostToDevice);
 
-	prescan<<<grid_size/4, thread_size, B*sizeof(float)>>>(dev_inc, dev_sums, size_sums, dev_sums_inc);
-
+	prescan<<<grid_size2, thread_size, B*sizeof(double)>>>(dev_inc, dev_sums_input, grid_size2, dev_sums_inc);
+	cudaDeviceSynchronize();
 	cudaMemcpy(inc, dev_inc, size_sums, cudaMemcpyDeviceToHost);
-	cudaMemcpy(sums_inc, dev_sums_inc, size_sums, cudaMemcpyDeviceToHost);
+	cudaMemcpy(sums_inc, dev_sums_inc, size_sums2, cudaMemcpyDeviceToHost);
 
+	cudaFree(dev_inc); cudaFree(dev_sums_inc); cudaFree(dev_sums_input);
+
+	scanCPU(inc_final, sums_inc, size_sums2);
+	for (int j = 0; j < grid_size2; j++) {
+		printf("inc[%i] = %0.3f\n", j, sums_inc[j]);
+	}
 	for (int j = 0; j < grid_size; j++) {
 		printf("inc[%i] = %0.3f\n", j, inc[j]);
 	}
 
-	for (int i = 0; i < grid_size; i++) {
-		for (int j = 0; j < B; j++){
-			printf("c[%i] = %0.3f, g[%i] = %0.3f\n", i, c[i*grid_size+j], i, g[i*grid_size+j] + dev_sums[i]);
-		}
-	}
-		
+	// START OF UPDATING SUMS
 
+	double g2[grid_size];
+	double *dev_g2;
+
+	cudaMalloc((void **) &dev_g2, size);
+	cudaMalloc((void **) &dev_inc_final, size_sums);
+
+	cudaMemcpy(dev_inc_final, inc_final, size_sums, cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_g2, inc, size_sums, cudaMemcpyHostToDevice);
+
+	uniform_add<<<grid_size2/4, thread_size, B*sizeof(double)>>>(dev_g2, dev_inc_final);
+	cudaDeviceSynchronize();
+
+	cudaMemcpy(g2, dev_g2, size, cudaMemcpyDeviceToHost);
+
+	for (int j = 0; j < grid_size; j++) {
+		printf("pscan2[%i] = %0.3f\n", j, g2[j]);
+	}
+	
+		
 	printf("GPU Time for scan size %i: %f\n", N, d_gpuTime);
 	printf("CPU Time for scan size %i: %f\n", N, d_cpuTime);
 
@@ -111,10 +141,10 @@ int main() {
 }
 
 
-__global__ void scan(float *g_odata, float *g_idata, int n) {
+__global__ void scan(double *g_odata, double *g_idata, int n) {
 	/* CUDA Naive Scan Algorithm (double buffered). */
 
-	extern __shared__ float temp[]; // allocated on invocation
+	extern __shared__ double temp[]; // allocated on invocation
 	int thid = threadIdx.x;
 	int pout = 0, pin = 1;
 
@@ -137,14 +167,15 @@ __global__ void scan(float *g_odata, float *g_idata, int n) {
 }
 
 
-__global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums) {
+__global__ void prescan(double *g_odata, double *g_idata, int n, double *g_sums) {
 	/* CUDA Work-Efficient Scan Algorithm. */
 
-	extern  __shared__  float temp[]; // allocated on invocation 
+	extern  __shared__  double temp[]; // allocated on invocation 
 	int thid = threadIdx.x;  // thread id of a thread in a block
 	int gthid = (blockIdx.x * blockDim.x) + thid; // global thread id of grid
 	int offset = 1;
 
+	/*
 	// for each thread in a block, put data into shared memory
 	if (gthid > n) {
 		// handle non-power of two arrays by padding elements in last block
@@ -156,6 +187,9 @@ __global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums) {
 		temp[2*thid] = g_idata[2*gthid];
 		temp[2*thid+1] = g_idata[2*gthid+1];
 	}
+	*/
+	temp[2*thid] = g_idata[2*gthid];
+	temp[2*thid+1] = g_idata[2*gthid+1];
 
     // build sum in place up the tree 
 	for (int d = B>>1; d > 0; d >>= 1) { 
@@ -181,7 +215,7 @@ __global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums) {
 		if (thid < d) { 
 			int ai = offset*(2*thid+1)-1; 
 			int bi = offset*(2*thid+2)-1; 
-			float t = temp[ai]; 
+			double t = temp[ai]; 
     		temp[ai] = temp[bi]; 
     		temp[bi] += t; 
     	} 
@@ -193,8 +227,17 @@ __global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums) {
 	g_odata[2*gthid+1] = temp[2*thid+1]; 
 }
 
+__global__ void uniform_add(double *o_array, double *sum_array) {
 
-void scanCPU(float *f_out, float *f_in, int i_n) {
+	int bid = blockIdx.x;
+	int gthid = (bid * blockDim.x) + threadIdx.x; // global thread id of grid
+
+	o_array[2*gthid] = o_array[2*gthid] + sum_array[bid];
+	o_array[2*gthid+1] = o_array[2*gthid+1] + sum_array[bid];
+}
+
+
+void scanCPU(double *f_out, double *f_in, int i_n) {
 	/* Apply all-prefix sums to an array on the CPu
 	without parallelization. */
 
