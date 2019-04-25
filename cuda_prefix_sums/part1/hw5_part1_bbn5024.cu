@@ -5,17 +5,14 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define N 5000 // number of array elements
-#define B 128  // number of elements in a block
+#define N 500000 // number of array elements
+#define B 1024  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
 __global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums);
 __global__ void uniform_add(float *o_array, float *sum_array);
 void scanCPU(float *f_out, float *f_in, int i_n);
 
-bool isPowerTwo(ulong x) {
-    return (x & (x - 1)) == 0;
-}
 
 double myDiffTime(struct timeval &start, struct timeval &end) {
 	/* Calculate the time difference. */
@@ -40,8 +37,9 @@ int main() {
 	double d_gpuTime, d_cpuTime;
 	
 	// handle padding of the array for non-powers of 2
-	if (!isPowerTwo(N)) {
-		new_N = pow(2, ceil(log(N)/log(2)));
+	if ((N % B) != 0) {
+		assert(multiple);
+		new_N = ((N + B - 1) / B) * B;
 	}
 	else{
 		new_N = N;
@@ -128,6 +126,8 @@ int main() {
 
 	cudaMemcpy(g2, dev_g2, size, cudaMemcpyDeviceToHost);
 
+	cudaFree(dev_g2); cudaFree(dev_inc_final);
+
 	// START OF FINAL UPDATE TO FIRST PREFIX SCAN
 
 	float g3[new_N];
@@ -148,6 +148,8 @@ int main() {
 	d_gpuTime = myDiffTime(start, end);
 
 	cudaFree(dev_g3); cudaFree(dev_first_add);
+
+	free(a);
 
 	/*
 	// display results of the prefix-sum
