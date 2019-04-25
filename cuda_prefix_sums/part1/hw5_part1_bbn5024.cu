@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define N 60 // number of array elements
+#define N 59 // number of array elements
 #define B 4  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
@@ -30,36 +30,49 @@ int main() {
 	/* Compare results between serial and parallel versions of the
 	prefix-sums algorithm. */
 
-	int grid_size = ceil(N / B);  // size of grids for first prefix-scan
-	int grid_size2 = ceil(grid_size / B); // size of grids for second prefix-scan
-	int thread_size = B / 2;  // thread size for each block
-
 	// arrays to be used for initial, cpu-result, and gpu-result arrays
 	// respectively.
-	float a[N], c[N], g[N], sums[grid_size];
 	timeval start, end;
+
+	int new_N;
 
 	// temporary pointer arrays for computation
 	float *dev_a, *dev_g, *dev_sums;
-	int size = N * sizeof(float);
-	int size_sums = grid_size * sizeof(float);
-	int size_sums2 = grid_size2 * sizeof(float);
 
 	double d_gpuTime, d_cpuTime;
 
+	
+	// handle padding of the array for non-powers of 2
+	if (!isPowerTwo(N)) {
+		new_N = pow(2, ceil(log(N)/log(2)));
+	}
+	else{
+		new_N = N;
+	}
+
+	float a[new_N];
+	
 	// initialize matrix a with random floats between 0 and 1000
 	for (int i = 1; i <= N; i++) {
 		a[i-1] = i;
 	}
-	/*
-	if (!isPowerTwo(N)) {
-		next_power = pow(2, ceil(log(x)/log(2)));
+	for (int i = N; i < new_N; i++) {
+		a[i] = 0;
 	}
-	*/
+
+	int size = new_N * sizeof(float);
+	int grid_size = ceil(new_N / B);  // size of grids for first prefix-scan
+	int grid_size2 = ceil(grid_size / B); // size of grids for second prefix-scan
+	int thread_size = B / 2;  // thread size for each block
+	int size_sums = grid_size * sizeof(float);
+	int size_sums2 = grid_size2 * sizeof(float);
+	float c[new_N], g[new_N], sums[grid_size];
+
+	printf("%d", new_N);
 
 	// CPU version (serial) of prefix-sum
 	gettimeofday(&start, NULL);
-	scanCPU(c, a, N);
+	scanCPU(c, a, new_N);
 	gettimeofday(&end, NULL);
 	d_cpuTime = myDiffTime(start, end);
 
@@ -75,7 +88,7 @@ int main() {
 	cudaMemcpy(dev_a, a, size, cudaMemcpyHostToDevice);
 
 	// work-efficient scan for SUMS array
-	prescan<<<grid_size, thread_size, B*sizeof(float)>>>(dev_g, dev_a, N, dev_sums);
+	prescan<<<grid_size, thread_size, B*sizeof(float)>>>(dev_g, dev_a, new_N, dev_sums);
 	cudaDeviceSynchronize();
 	cudaMemcpy(g, dev_g, size, cudaMemcpyDeviceToHost);
 	cudaMemcpy(sums, dev_sums, size_sums, cudaMemcpyDeviceToHost);
@@ -150,6 +163,7 @@ int main() {
 		//}
 	}
 	*/
+	
 		
 	printf("GPU Time for scan size %i: %f\n", N, d_gpuTime);
 	printf("CPU Time for scan size %i: %f\n", N, d_cpuTime);
