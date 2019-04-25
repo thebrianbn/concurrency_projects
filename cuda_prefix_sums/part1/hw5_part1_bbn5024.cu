@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define N 50000 // number of array elements
+#define N 5000 // number of array elements
 #define B 128  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
@@ -30,8 +30,6 @@ int main() {
 	/* Compare results between serial and parallel versions of the
 	prefix-sums algorithm. */
 
-	// arrays to be used for initial, cpu-result, and gpu-result arrays
-	// respectively.
 	timeval start, end;
 
 	int new_N;
@@ -49,8 +47,9 @@ int main() {
 		new_N = N;
 	}
 
-	float a[new_N];
-	//a = (float *) malloc(new_N * sizeof(float));
+	//float a[new_N];
+	float *a;
+	a = (float *) malloc(new_N * sizeof(float));
 	
 	// initialize matrix a with random floats between 0 and 1000
 	for (int i = 1; i <= N; i++) {
@@ -70,7 +69,7 @@ int main() {
 
 	// CPU version (serial) of prefix-sum
 	gettimeofday(&start, NULL);
-	scanCPU(c, a, new_N);
+	scanCPU(c, a, N);
 	gettimeofday(&end, NULL);
 	d_cpuTime = myDiffTime(start, end);
 
@@ -150,7 +149,7 @@ int main() {
 
 	cudaFree(dev_g3); cudaFree(dev_first_add);
 
-	
+	/*
 	// display results of the prefix-sum
 	for (int i = 0; i < N; i++) {
 		printf("c[%i] = %0.3f, g3[%i] = %0.3f\n", i, c[i], i, g3[i]);
@@ -160,7 +159,7 @@ int main() {
 		//	break;
 		//}
 	}
-	
+	*/
 	
 		
 	printf("GPU Time for scan size %i: %f\n", N, d_gpuTime);
