@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define N 5000 // number of array elements
+#define N 50000 // number of array elements
 #define B 128  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
@@ -49,8 +49,8 @@ int main() {
 		new_N = N;
 	}
 
-	float *a;
-	a = (float *) malloc(new_N * sizeof(float));
+	float a[new_N];
+	//a = (float *) malloc(new_N * sizeof(float));
 	
 	// initialize matrix a with random floats between 0 and 1000
 	for (int i = 1; i <= N; i++) {
