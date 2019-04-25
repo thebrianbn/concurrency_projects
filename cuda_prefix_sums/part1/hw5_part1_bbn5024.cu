@@ -5,8 +5,8 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define N 60 // number of array elements
-#define B 4  // number of elements in a block
+#define N 5000 // number of array elements
+#define B 64  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
 __global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums);
@@ -24,8 +24,6 @@ double myDiffTime(struct timeval &start, struct timeval &end) {
 } 
 
 int main() {
-	/* Compare results between serial and parallel versions of the
-	prefix-sums algorithm. */
 
 	timeval start, end;
 
@@ -62,7 +60,7 @@ int main() {
 	int thread_size = B / 2;  // thread size for each block
 	int size_sums = grid_size * sizeof(float);
 	int size_sums2 = grid_size2 * sizeof(float);
-	float c[new_N], g[new_N], sums[grid_size];
+	float c[N], g[new_N], sums[grid_size];
 
 	// CPU version (serial) of prefix-sum
 	gettimeofday(&start, NULL);
@@ -160,7 +158,6 @@ int main() {
 		//	break;
 		//}
 	}
-	
 	
 		
 	printf("GPU Time for scan size %i: %f\n", N, d_gpuTime);
