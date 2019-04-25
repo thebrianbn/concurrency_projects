@@ -5,8 +5,8 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define N 500000 // number of array elements
-#define B 1024  // number of elements in a block
+#define N 60 // number of array elements
+#define B 4  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
 __global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums);
@@ -38,13 +38,12 @@ int main() {
 	
 	// handle padding of the array for non-powers of 2
 	if ((N % B) != 0) {
-		assert(multiple);
 		new_N = ((N + B - 1) / B) * B;
 	}
 	else{
 		new_N = N;
 	}
-
+	printf("%d", new_N);
 	//float a[new_N];
 	float *a;
 	a = (float *) malloc(new_N * sizeof(float));
@@ -151,7 +150,7 @@ int main() {
 
 	free(a);
 
-	/*
+	
 	// display results of the prefix-sum
 	for (int i = 0; i < N; i++) {
 		printf("c[%i] = %0.3f, g3[%i] = %0.3f\n", i, c[i], i, g3[i]);
@@ -161,7 +160,7 @@ int main() {
 		//	break;
 		//}
 	}
-	*/
+	
 	
 		
 	printf("GPU Time for scan size %i: %f\n", N, d_gpuTime);
