@@ -1,0 +1,40 @@
+#!/bin/bash
+
+#PBS -A cyberlamp_class
+
+#PBS -l nodes=1:gpus=1
+
+#PBS -l qos=cl_class
+
+#PBS -l walltime=5:00
+
+#PBS -l pmem=10gb
+
+#PBS -A open
+
+# Get started
+
+echo "#-#-#Job started on `hostname` at `date` "
+echo This job runs on the following processors:
+echo `cat $PBS_NODEFILE`
+
+ulimit -s 10240
+
+# Go to work directory
+
+cd ~/concurrency_projects/cuda_prefix_sums/part1/
+
+# Compile code
+
+nvcc -o hw4_part1_bbn5024 hw5_part1_bbn5024.cu
+
+#-#-# Echo
+echo "#-#-#Compilation completed and execution started at `date`"
+# Output the time here for possible debugging purposes.
+
+#-#-# Run
+./hw5_part1_bbn5024
+
+#-#-# Echo
+echo "#-#-#Job Ended at `date`"
+# Output the time here for possible debugging purposes.

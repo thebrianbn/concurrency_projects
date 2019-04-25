@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define N 1024 // number of array elements
+#define N 60 // number of array elements
 #define B 4  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
