@@ -5,8 +5,8 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define N 59 // number of array elements
-#define B 4  // number of elements in a block
+#define N 20000 // number of array elements
+#define B 128  // number of elements in a block
 
 __global__ void scan(float *g_odata, float *g_idata, int n);
 __global__ void prescan(float *g_odata, float *g_idata, int n, float *g_sums);
@@ -40,7 +40,6 @@ int main() {
 	float *dev_a, *dev_g, *dev_sums;
 
 	double d_gpuTime, d_cpuTime;
-
 	
 	// handle padding of the array for non-powers of 2
 	if (!isPowerTwo(N)) {
@@ -67,8 +66,6 @@ int main() {
 	int size_sums = grid_size * sizeof(float);
 	int size_sums2 = grid_size2 * sizeof(float);
 	float c[new_N], g[new_N], sums[grid_size];
-
-	printf("%d", new_N);
 
 	// CPU version (serial) of prefix-sum
 	gettimeofday(&start, NULL);
@@ -133,7 +130,7 @@ int main() {
 
 	// START OF FINAL UPDATE TO FIRST PREFIX SCAN
 
-	float g3[N];
+	float g3[new_N];
 	float *dev_g3, *dev_first_add;
 
 	cudaMalloc((void **) &dev_g3, size);
