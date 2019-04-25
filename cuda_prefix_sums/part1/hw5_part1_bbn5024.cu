@@ -139,6 +139,7 @@ int main() {
 
 	cudaFree(dev_g3); cudaFree(dev_first_add);
 
+	/*
 	// display results of the prefix-sum
 	for (int i = 0; i < N; i++) {
 		printf("c[%i] = %0.3f, g3[%i] = %0.3f\n", i, c[i], i, g3[i]);
@@ -148,6 +149,7 @@ int main() {
 		//	break;
 		//}
 	}
+	*/
 		
 	printf("GPU Time for scan size %i: %f\n", N, d_gpuTime);
 	printf("CPU Time for scan size %i: %f\n", N, d_cpuTime);
